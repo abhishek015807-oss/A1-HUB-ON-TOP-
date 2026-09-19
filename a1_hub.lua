@@ -1676,7 +1676,7 @@ GetStaticQuestData = function()
         elseif lvl <= 1624 then return {Quest="DragonCrewQuest", QNPC=CFrame.new(6736.33, 127.45, -712.33), Mon="Dragon Crew Archer", MPos=CFrame.new(6625.00, 378.00, 244.00), Req=2}
         elseif lvl <= 1649 then return {Quest="AmazonQuest2", QNPC=CFrame.new(5210.87, 1004.14, 755.84), Mon="Hydra Enforcer", MPos=CFrame.new(4547.11, 1003.10, 334.19), Req=1}
         elseif lvl <= 1699 then return {Quest="AmazonQuest2", QNPC=CFrame.new(5210.87, 1004.14, 755.84), Mon="Venomous Assailant", MPos=CFrame.new(4674.93, 1134.83, 996.31), Req=2}
-        elseif lvl <= 1724 then return {Quest="MarineTreeIsland", QNPC=CFrame.new(2180.54, 27.82, -6741.55), Mon="Marine Commodore", MPos=CFrame.new(2286.01, 73.13, -7159.81), Req=1}
+        elseif lvl <= 1724 then return {Quest="MarineTreeIsland", QNPC=CFrame.new(2180.54, 27.82, -6741.55), Mon="Marine Commodore", MPos=CFrame.new(2656.25, 75.61, -7913.84), Req=1}
         elseif lvl <= 1774 then return {Quest="MarineTreeIsland", QNPC=CFrame.new(2179.99, 28.73, -6740.06), Mon="Marine Rear Admiral", MPos=CFrame.new(3656.77, 160.52, -7001.60), Req=2}
         elseif lvl <= 1799 then return {Quest="DeepForestIsland3", QNPC=CFrame.new(-10581.66, 330.87, -8761.19), Mon="Fishman Raider", MPos=CFrame.new(-10407.53, 331.76, -8368.52), Req=1}
         elseif lvl <= 1824 then return {Quest="DeepForestIsland3", QNPC=CFrame.new(-10581.66, 330.87, -8761.19), Mon="Fishman Captain", MPos=CFrame.new(-10994.70, 352.38, -9002.11), Req=2}
@@ -2786,7 +2786,7 @@ AllMobSpawns = {
     ["Venomous Assailant"] = CFrame.new(4674.93, 1134.83, 996.31),
     ["Hydra Leader"] = CFrame.new(5821.90, 1019.10, -73.72),
     ["Island Empress"] = CFrame.new(5821.90, 1019.10, -73.72),
-    ["Marine Commodore"] = CFrame.new(2286.01, 73.13, -7159.81),
+    ["Marine Commodore"] = CFrame.new(2656.25, 75.61, -7913.84),
     ["Marine Rear Admiral"] = CFrame.new(3656.77, 160.52, -7001.60),
     ["Kilo Admiral"] = CFrame.new(2764.22, 432.46, -7144.46),
     ["Fishman Raider"] = CFrame.new(-10407.53, 331.76, -8368.52),
@@ -3093,9 +3093,7 @@ local function FindNearestQuestEnemy(targetMobName, activeTitle)
 end
 
 local function GetAreaQuestMobs(targetMobName, centerRefPos, maxRadius)
-    local rad = maxRadius or 350
-    local char = plr.Character
-    local root = char and char:FindFirstChild("HumanoidRootPart")
+    local rad = maxRadius or 1500
     local matchingMobs = {}
     local folders = { 
         workspace:FindFirstChild("Enemies"), 
@@ -3107,10 +3105,9 @@ local function GetAreaQuestMobs(targetMobName, centerRefPos, maxRadius)
             for _, enemy in ipairs(folder:GetChildren()) do
                 if IsValidLivingEnemy(enemy) then
                     local eRoot = enemy:FindFirstChild("HumanoidRootPart") or enemy.PrimaryPart
-                    if IsMobMatchingQuest(enemy.Name, targetMobName, "") then
+                    if eRoot and IsMobMatchingQuest(enemy.Name, targetMobName, "") then
                         local distToSpawn = (eRoot.Position - centerRefPos).Magnitude
-                        local distToPlayer = root and (eRoot.Position - root.Position).Magnitude or 0
-                        if distToSpawn <= rad and distToPlayer <= 350 then
+                        if distToSpawn <= rad then
                             table.insert(matchingMobs, enemy)
                         end
                     end
@@ -3227,30 +3224,57 @@ task.spawn(function()
                     local spawnCF, spawnPart = GetEnemySpawnLocation(targetMobName)
                     local areaRefPos = (spawnCF and spawnCF.Position) or (targetMobPos and targetMobPos.Position) or root.Position
 
-                    -- If player is still traveling to the mob area (> 350 studs), fly directly to the mob spawn first
-                    local distToSpawn = (root.Position - areaRefPos).Magnitude
-                    if distToSpawn > 350 then
-                        LogFarmStatus("Flying to " .. targetMobName .. " spawn (" .. math.floor(distToSpawn) .. "m)...")
-                        local waitPos = (spawnCF or targetMobPos) * CFrame.new(0, farmHeight, 0)
-                        _tp(waitPos)
-                        return
+                    -- Step 1: Scan for ALL alive quest mobs in the area/island (within 2200 studs of spawn)
+                    local allAliveMobs = {}
+                    local folders = { workspace:FindFirstChild("Enemies"), workspace:FindFirstChild("Characters") }
+                    for _, folder in ipairs(folders) do
+                        if folder then
+                            for _, enemy in ipairs(folder:GetChildren()) do
+                                if IsValidLivingEnemy(enemy) and IsMobMatchingQuest(enemy.Name, targetMobName, "") then
+                                    local eRoot = enemy:FindFirstChild("HumanoidRootPart") or enemy.PrimaryPart
+                                    if eRoot and (eRoot.Position - areaRefPos).Magnitude <= 2200 then
+                                        table.insert(allAliveMobs, enemy)
+                                    end
+                                end
+                            end
+                        end
                     end
 
-                    -- Group (Bring Mobs) mode
-                    local areaRadius = 350
-                    local areaMobs = GetAreaQuestMobs(targetMobName, areaRefPos, areaRadius)
+                    -- Step 2: If ANY matching enemies are alive anywhere in the zone, hunt them!
+                    if #allAliveMobs > 0 then
+                        -- Find nearest alive target mob to the player
+                        local nearestMob = nil
+                        local minDist = math.huge
+                        for _, mob in ipairs(allAliveMobs) do
+                            local mRoot = mob:FindFirstChild("HumanoidRootPart") or mob.PrimaryPart
+                            local d = (mRoot.Position - root.Position).Magnitude
+                            if d < minDist then
+                                minDist = d
+                                nearestMob = mob
+                            end
+                        end
 
-                    if #areaMobs > 0 then
+                        -- Cluster all mobs within 350 studs of this nearest mob
+                        local cluster = {}
+                        local nPos = (nearestMob:FindFirstChild("HumanoidRootPart") or nearestMob.PrimaryPart).Position
+                        for _, mob in ipairs(allAliveMobs) do
+                            local mRoot = mob:FindFirstChild("HumanoidRootPart") or mob.PrimaryPart
+                            if (mRoot.Position - nPos).Magnitude <= 350 then
+                                table.insert(cluster, mob)
+                            end
+                        end
+
+                        -- Calculate centroid of the cluster
                         local sumX, sumY, sumZ = 0, 0, 0
-                        for _, mob in ipairs(areaMobs) do
+                        for _, mob in ipairs(cluster) do
                             local mRoot = mob:FindFirstChild("HumanoidRootPart") or mob.PrimaryPart
                             sumX = sumX + mRoot.Position.X
                             sumY = sumY + mRoot.Position.Y
                             sumZ = sumZ + mRoot.Position.Z
                         end
-                        local centerPos = Vector3.new(sumX / #areaMobs, sumY / #areaMobs, sumZ / #areaMobs)
-
+                        local centerPos = Vector3.new(sumX / #cluster, sumY / #cluster, sumZ / #cluster)
                         local playerCenterPos = CFrame.new(centerPos.X, centerPos.Y + farmHeight, centerPos.Z)
+
                         local distToCenter = (root.Position - playerCenterPos.Position).Magnitude
                         if distToCenter > 4 then
                             _tp(playerCenterPos)
@@ -3258,12 +3282,15 @@ task.spawn(function()
                             if block then block.CFrame = playerCenterPos end
                         end
 
-                        GroupAreaMobs(areaMobs, centerPos)
+                        if #cluster > 1 then
+                            GroupAreaMobs(cluster, centerPos)
+                        end
 
-                        LogFarmStatus("Group Farming " .. #areaMobs .. "x " .. targetMobName)
+                        LogFarmStatus("Farming " .. #cluster .. "x " .. targetMobName .. " (" .. #allAliveMobs .. " alive on island)")
                         SmartEquipWeapon()
                         FastAttack.Attack()
                     else
+                        -- Step 3: Zero alive mobs left -> fly to spawn and wait for respawn
                         if not spawnCF then
                             spawnCF = targetMobPos or qData.MPos
                         end
