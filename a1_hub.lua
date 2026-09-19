@@ -634,11 +634,32 @@ DropFruits = function()
     end
   end
 end
+local function SafeGetInventory()
+    local ok, res = pcall(function()
+        return replicated.Remotes.CommF_:InvokeServer("getInventory")
+    end)
+    return (ok and typeof(res) == "table") and res or {}
+end
+
+local function SafeGetInventoryFruits()
+    local ok, res = pcall(function()
+        return replicated.Remotes.CommF_:InvokeServer("getInventoryFruits")
+    end)
+    return (ok and typeof(res) == "table") and res or {}
+end
+
+local function SafeGetFruits()
+    local ok, res = pcall(function()
+        return replicated.Remotes.CommF_:InvokeServer("GetFruits")
+    end)
+    return (ok and typeof(res) == "table") and res or {}
+end
+
 GetBP = function(v)
   return plr.Backpack:FindFirstChild(v) or plr.Character:FindFirstChild(v)
 end
 GetIn = function(Name)
-  for _ ,v1 in pairs(replicated.Remotes.CommF_:InvokeServer("getInventory")) do
+  for _ ,v1 in pairs(SafeGetInventory()) do
     if type(v1) == "table" then
       if v1.Name == Name or plr.Character:FindFirstChild(Name) or plr.Backpack:FindFirstChild(Name) then
         return true
@@ -648,7 +669,7 @@ GetIn = function(Name)
   return false
 end
 GetM = function(Name)
-  for _,tab in pairs(replicated.Remotes.CommF_:InvokeServer("getInventory")) do
+  for _,tab in pairs(SafeGetInventory()) do
     if type(tab) == "table" then
 	  if tab.Type == "Material" then
 	    if tab.Name == Name then
@@ -660,7 +681,7 @@ GetM = function(Name)
 return 0
 end
 GetWP = function(nametool)
-  for _,v4 in pairs(replicated.Remotes.CommF_:InvokeServer("getInventory")) do
+  for _,v4 in pairs(SafeGetInventory()) do
     if type(v4) == "table" then
       if v4.Type == "Sword" then
         if v4.Name == nametool or plr.Character:FindFirstChild(nametool) or plr.Backpack:FindFirstChild(nametool) then
@@ -905,7 +926,7 @@ end
 
 function checkinventory(v)
     if v then
-        for i, vl in pairs(ReplicatedStorage.Remotes.CommF_:InvokeServer("getInventory")) do
+        for i, vl in pairs(SafeGetInventory()) do
             if vl.Name == v then
                 return true
             end
@@ -6536,12 +6557,12 @@ spawn(function()
             if replicated.Remotes.CommF_:InvokeServer("GetUnlockables").FlamingoAccess == nil then
               TabelDevilFruitStore = {}
               TabelDevilFruitOpen = {}
-              for i,v in pairs(replicated.Remotes["CommF_"]:InvokeServer("getInventoryFruits")) do
+              for i,v in pairs(SafeGetInventoryFruits()) do
                 for i1,v1 in pairs(v) do
                   if i1 == "Name" then table.insert(TabelDevilFruitStore,v1)end
                 end
               end
-              for i,v in next, game.ReplicatedStorage:WaitForChild("Remotes").CommF_:InvokeServer("GetFruits") do
+              for i,v in next, SafeGetFruits() do
                 if v.Price >= 1000000 then table.insert(TabelDevilFruitOpen,v.Name) end
               end
               for i,DevilFruitOpenDoor in pairs(TabelDevilFruitOpen) do
@@ -7741,7 +7762,7 @@ spawn(function()
 		     table.insert(FruitPrice,v.Name)
 		    end
 		  end
-		  for i,v in pairs(replicated.Remotes["CommF_"]:InvokeServer("getInventoryFruits")) do
+		  for i,v in pairs(SafeGetInventoryFruits()) do
 		    for _,x in pairs(v) do
 		      if _ == "Name" then 
 		        table.insert(FruitStore,x)
