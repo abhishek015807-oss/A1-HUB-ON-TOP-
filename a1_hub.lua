@@ -714,9 +714,11 @@ block.Transparency = 1
 local blockfind = workspace:FindFirstChild(block.Name)
 if blockfind and blockfind ~= block then blockfind:Destroy() end
 task.spawn(function()
-    while task.wait(0.1) do
+    while task.wait(0.05) do
         if block and block.Parent == workspace then
-            getgenv().OnFarm = (shouldTween or (_G.CurrentTween and _G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing)) and true or false
+            -- OnFarm is true ONLY while a tween is actively playing
+            local isTweening = (_G.CurrentTween ~= nil) and (_G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing)
+            getgenv().OnFarm = isTweening
         else
             getgenv().OnFarm = false
         end
@@ -737,26 +739,31 @@ task.spawn(function()
         end)
     end)
 
-    -- Ultra-smooth Heartbeat position sync (zero jitter, zero screen shake)
+    -- Heartbeat: lock character to block ONLY while a tween is actively playing
     game:GetService("RunService").Heartbeat:Connect(function()
         pcall(function()
-            if (getgenv().OnFarm or shouldTween or (_G.CurrentTween and _G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing)) and block and block.Parent == workspace then
+            local isTweening = (_G.CurrentTween ~= nil) and (_G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing)
+            if isTweening and block and block.Parent == workspace then
                 local char = a.Character
                 local hum = char and char:FindFirstChildOfClass("Humanoid")
                 local hrp = char and char:FindFirstChild("HumanoidRootPart")
                 if hrp and hum and hum.Health > 0 then
                     hrp.CFrame = block.CFrame
-                    hrp.Velocity = Vector3.new(0, 0, 0)
-                    hrp.RotVelocity = Vector3.new(0, 0, 0)
+                    -- Only zero velocity when drifting, prevents screen shake
+                    if hrp.Velocity.Magnitude > 2 then
+                        hrp.Velocity = Vector3.new(0, 0, 0)
+                        hrp.RotVelocity = Vector3.new(0, 0, 0)
+                    end
                 end
             end
         end)
     end)
 
-    -- Continuous collision bypass during tweening on Stepped
+    -- Stepped: disable character collision only while actively tweening
     game:GetService("RunService").Stepped:Connect(function()
         pcall(function()
-            if getgenv().OnFarm or shouldTween or (_G.CurrentTween and _G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing) then
+            local isTweening = (_G.CurrentTween ~= nil) and (_G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing)
+            if isTweening then
                 local char = a.Character
                 if char then
                     for _, part in ipairs(char:GetDescendants()) do
@@ -1164,28 +1171,16 @@ _tp = function(target)
         hum.PlatformStand = false
     end
     
-    -- Ensure BodyClip exists immediately on start of tween with full force
-    local clip = rootPart:FindFirstChild("BodyClip")
-    if not clip then
-        clip = Instance.new("BodyVelocity")
-        clip.Name = "BodyClip"
-        clip.MaxForce = Vector3.new(1000000, 1000000, 1000000)
-        clip.Velocity = Vector3.new(0, 0, 0)
-        clip.Parent = rootPart
-    end
-    
     -- Recalculate distance and speed
     distance = (gg.Position - rootPart.Position).Magnitude
     local speed = _G.TweenSpeed or (Settings and Settings["Tween Speed"]) or 200
     if speed <= 0 then speed = 200 end
     
-    -- Sync block start position to rootPart so the tween begins seamlessly from current character position
-    if (block.Position - rootPart.Position).Magnitude > 5 then
-        block.CFrame = rootPart.CFrame
-    end
+    -- Always sync block to current rootPart before starting tween (prevents position jump)
+    block.CFrame = rootPart.CFrame
     
     local tweenInfo = TweenInfo.new(distance / speed, Enum.EasingStyle.Linear)
-    local tween = game:GetService("TweenService"):Create(block, tweenInfo, {CFrame = gg})
+    local tween = TweenService:Create(block, tweenInfo, {CFrame = gg})
     _G.CurrentTween = tween
     _G.CurrentTweenTarget = gg
     _G.TweenCache = tween    
@@ -1198,15 +1193,25 @@ _tp = function(target)
     task.spawn(function() 
         while tween.PlaybackState == Enum.PlaybackState.Playing do 
             if not shouldTween then 
-                tween:Cancel() 
-                if _G.CurrentTween == tween then _G.CurrentTween = nil end
+                tween:Cancel()
                 break 
             end 
-            task.wait(0.1) 
+            task.wait(0.05) 
         end 
+        -- Clean up: reset shouldTween so player can move freely after tween
         if _G.CurrentTween == tween then
             _G.CurrentTween = nil
             _G.CurrentTweenTarget = nil
+        end
+        -- Reset farm state so character isn't permanently locked
+        if _G.CurrentTween == nil then
+            shouldTween = false
+            getgenv().OnFarm = false
+            -- Clean up any leftover BodyClip
+            pcall(function()
+                local hrp2 = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+                if hrp2 and hrp2:FindFirstChild("BodyClip") then hrp2.BodyClip:Destroy() end
+            end)
         end
     end)
     
@@ -3391,41 +3396,63 @@ spawn(function()
 end)
 
 CastleRaids = Tabs.Main:AddToggle({
-Name = "Auto Pirate Raid", 
-Description = "", 
-Default = false,
-Callback = function(Value)
-  _G.AutoRaidCastle = Value
-end})
-spawn(function()
-  while wait(Sec) do
-    if _G.AutoRaidCastle then
-      pcall(function()
-      local CFrameCastleRaid = CFrame.new(-5496.17432, 313.768921, -2841.53027, 0.924894512, 7.37058015e-09, 0.380223751, 3.5881019e-08, 1, -1.06665446e-07, -0.380223751, 1.12297109e-07, 0.924894512)
-        if (CFrame.new(-5539.3115234375, 313.800537109375, -2972.372314453125).Position - Root.Position).Magnitude <= 500 then
-          for i,v in pairs(workspace.Enemies:GetChildren()) do
-            if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-              if v.Name then
-                if (v.HumanoidRootPart.Position - Root.Position).Magnitude <= 2000 then
-                  repeat wait() Attack.Kill(v,_G.AutoRaidCastle) until not _G.AutoRaidCastle or not v.Parent or v.Humanoid.Health <= 0 or not workspace.Enemies:FindFirstChild(v.Name)
-                end
-              end
-            end
-          end
-        else
-          local Castle_Mob = {"Galley Pirate","Galley Captain","Raider","Mercenary","Vampire","Zombie","Snow Trooper","Winter Warrior","Lab Subordinate","Horned Warrior","Magma Ninja","Lava Pirate","Ship Deckhand","Ship Engineer","Ship Steward","Ship Officer","Arctic Warrior","Snow Lurker","Sea Soldier","Water Fighter"}
-          for i = 1,#Castle_Mob do
-            if replicated:FindFirstChild(Castle_Mob[i]) then
-              for _,v in pairs(replicated:GetChildren()) do
-                if table.find(Castle_Mob, v.Name) then _tp(CFrameCastleRaid) end
-              end
-            end
-          end
-        end
-      end)
+    Name = "Auto Pirate Raid",
+    Description = "Farms Pirate Raid Castle enemies (Sea 3)",
+    Default = false,
+    Callback = function(Value)
+        _G.AutoRaidCastle = Value
     end
-  end
-end)
+})
+do
+    local _raidFarmPos = CFrame.new(-5496.17432, 313.768921, -2841.53027, 0.924894512, 7.37058015e-09, 0.380223751, 3.5881019e-08, 1, -1.06665446e-07, -0.380223751, 1.12297109e-07, 0.924894512)
+    local _raidCenter   = Vector3.new(-5539.3115234375, 313.800537109375, -2972.372314453125)
+
+    local function GetRaidTarget()
+        local bestDist = math.huge
+        local best = nil
+        -- Check workspace.Enemies
+        local enemiesFolder = workspace:FindFirstChild("Enemies")
+        if enemiesFolder then
+            for _, v in ipairs(enemiesFolder:GetChildren()) do
+                local vHum = v:FindFirstChild("Humanoid")
+                local vRoot = v:FindFirstChild("HumanoidRootPart") or v.PrimaryPart
+                if vHum and vRoot and vHum.Health > 0 then
+                    local dist = (vRoot.Position - _raidCenter).Magnitude
+                    if dist <= 2500 and dist < bestDist then
+                        bestDist = dist
+                        best = v
+                    end
+                end
+            end
+        end
+        return best
+    end
+
+    task.spawn(function()
+        while task.wait(0.15) do
+            if _G.AutoRaidCastle then
+                pcall(function()
+                    local char = plr.Character
+                    if not char then return end
+                    local root = char:FindFirstChild("HumanoidRootPart")
+                    local hum  = char:FindFirstChild("Humanoid")
+                    if not root or not hum or hum.Health <= 0 then return end
+
+                    local target = GetRaidTarget()
+                    if target and Attack.Alive(target) then
+                        repeat
+                            task.wait(0.1)
+                            Attack.Kill(target, _G.AutoRaidCastle)
+                        until not _G.AutoRaidCastle or not target.Parent or not Attack.Alive(target)
+                    else
+                        -- No enemy found - tween to raid position and wait
+                        _tp(_raidFarmPos)
+                    end
+                end)
+            end
+        end
+    end)
+end
 
 
 
@@ -3481,14 +3508,28 @@ end
 
 local function GetMagnetizedEnemies()
     local mobs = {}
-    local folders = { workspace:FindFirstChild("Enemies"), workspace:FindFirstChild("Characters") }
+    local seen = {}
+    -- Primary: check dedicated folders
+    local folders = {
+        workspace:FindFirstChild("Enemies"),
+        workspace:FindFirstChild("Characters"),
+        workspace:FindFirstChild("NPCs"),
+    }
     for _, folder in ipairs(folders) do
         if folder then
             for _, enemy in ipairs(folder:GetChildren()) do
-                if IsValidMagnetizedEnemy(enemy) then
+                if not seen[enemy] and IsValidMagnetizedEnemy(enemy) then
+                    seen[enemy] = true
                     table.insert(mobs, enemy)
                 end
             end
+        end
+    end
+    -- Fallback: scan entire workspace for any missed magnetized humanoid models
+    for _, obj in ipairs(workspace:GetChildren()) do
+        if not seen[obj] and obj:IsA("Model") and IsValidMagnetizedEnemy(obj) then
+            seen[obj] = true
+            table.insert(mobs, obj)
         end
     end
     return mobs
@@ -3521,10 +3562,9 @@ Tabs.Main:AddButton({
             end
             for _, enemy in ipairs(targets) do
                 if IsValidMagnetizedEnemy(enemy) then
-                    local eRoot = enemy:FindFirstChild("HumanoidRootPart") or enemy.PrimaryPart
                     local eHum = enemy:FindFirstChild("Humanoid")
                     while IsValidMagnetizedEnemy(enemy) and eHum and eHum.Health > 0 do
-                        _tp(eRoot.CFrame * CFrame.new(0, 22, 0))
+                        Attack.Kill(enemy, true)
                         SmartEquipWeapon()
                         FastAttack.Attack()
                         task.wait(0.1)
@@ -3565,37 +3605,12 @@ task.spawn(function()
                         local tRoot = nearestTarget:FindFirstChild("HumanoidRootPart") or nearestTarget.PrimaryPart
                         local tHum = nearestTarget:FindFirstChild("Humanoid")
                         if tRoot and tHum and tHum.Health > 0 then
-                            local cluster = {}
-                            for _, enemy in ipairs(targets) do
-                                local eRoot = enemy:FindFirstChild("HumanoidRootPart") or enemy.PrimaryPart
-                                if eRoot and (eRoot.Position - tRoot.Position).Magnitude <= 350 then
-                                    table.insert(cluster, enemy)
-                                end
-                            end
-
-                            if #cluster > 1 then
-                                local sumX, sumY, sumZ = 0, 0, 0
-                                for _, m in ipairs(cluster) do
-                                    local mR = m:FindFirstChild("HumanoidRootPart") or m.PrimaryPart
-                                    sumX = sumX + mR.Position.X
-                                    sumY = sumY + mR.Position.Y
-                                    sumZ = sumZ + mR.Position.Z
-                                end
-                                local centroid = Vector3.new(sumX / #cluster, sumY / #cluster, sumZ / #cluster)
-                                local farmPos = CFrame.new(centroid.X, centroid.Y + 22, centroid.Z)
-
-                                _tp(farmPos)
-                                GroupAreaMobs(cluster, centroid)
-                                SmartEquipWeapon()
-                                FastAttack.Attack()
-                                MagnetStatus:SetDesc("Status: Group Farming " .. #cluster .. "x Magnetized mobs (" .. #targets .. " total)")
-                            else
-                                local farmPos = tRoot.CFrame * CFrame.new(0, 22, 0)
-                                _tp(farmPos)
-                                SmartEquipWeapon()
-                                FastAttack.Attack()
-                                MagnetStatus:SetDesc("Status: Farming " .. nearestTarget.Name .. " (HP: " .. math.floor(tHum.Health) .. " | " .. #targets .. " left)")
-                            end
+                            MagnetStatus:SetDesc("Status: Farming " .. nearestTarget.Name .. " (HP: " .. math.floor(tHum.Health) .. " | " .. #targets .. " left)")
+                            -- Use Attack.Kill for reliable positioning + weapon + attack
+                            Attack.Kill(nearestTarget, true)
+                            -- Also fire FastAttack for extra hit coverage
+                            SmartEquipWeapon()
+                            FastAttack.Attack()
                         end
                     end
                 else
