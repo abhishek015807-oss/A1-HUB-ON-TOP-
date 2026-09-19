@@ -674,7 +674,7 @@ end
 getInfinity_Ability = function(Method, Var)
   if not Root then return end
   if Method == "Soru" and Var then
-    for _,gc in next, getgc() do
+    for _,gc in next, (getgc and getgc() or {}) do
       if plr.Character.Soru then
         if ((typeof(gc) == "function") and (getfenv(gc).script == plr.Character.Soru)) then
           for _, v in next, getupvalues(gc) do
@@ -739,22 +739,25 @@ task.spawn(function()
         end)
     end)
 
-    -- Heartbeat: lock character to block ONLY while a tween is actively playing
+    -- Heartbeat: lock character to block when tweening; keep block at character when idle!
     game:GetService("RunService").Heartbeat:Connect(function()
         pcall(function()
+            local char = a.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if not hrp or not hum or hum.Health <= 0 then return end
+
             local isTweening = (_G.CurrentTween ~= nil) and (_G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing)
             if isTweening and block and block.Parent == workspace then
-                local char = a.Character
-                local hum = char and char:FindFirstChildOfClass("Humanoid")
-                local hrp = char and char:FindFirstChild("HumanoidRootPart")
-                if hrp and hum and hum.Health > 0 then
-                    hrp.CFrame = block.CFrame
-                    -- Only zero velocity when drifting, prevents screen shake
-                    if hrp.Velocity.Magnitude > 2 then
-                        hrp.Velocity = Vector3.new(0, 0, 0)
-                        hrp.RotVelocity = Vector3.new(0, 0, 0)
-                    end
+                hrp.CFrame = block.CFrame
+                if hrp.Velocity.Magnitude > 2 then
+                    hrp.Velocity = Vector3.new(0, 0, 0)
+                    hrp.RotVelocity = Vector3.new(0, 0, 0)
                 end
+            elseif block and block.Parent == workspace then
+                -- When NOT actively tweening, block ALWAYS stays at character position!
+                -- This completely eliminates the "snap back to idle position" bug!
+                block.CFrame = hrp.CFrame
             end
         end)
     end)
@@ -1110,14 +1113,16 @@ _tp = function(target)
         return
     end
 
-    -- Deduplication: if already smoothly tweening to this exact target (within 5 studs), let it play uninterrupted!
+    -- Deduplication: if already smoothly tweening to this exact target (within 10 studs), let it play uninterrupted!
     if _G.CurrentTween and _G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing and _G.CurrentTweenTarget then
-        if (_G.CurrentTweenTarget.Position - gg.Position).Magnitude <= 5 then
+        if (_G.CurrentTweenTarget.Position - gg.Position).Magnitude <= 10 then
             return _G.CurrentTween
         end
     end
 
-    -- Target changed or new tween needed: cleanly cancel existing tween
+    -- Cancel old tween cleanly without corrupting state
+    _G.TweenGen = (_G.TweenGen or 0) + 1
+    local myGen = _G.TweenGen
     if _G.CurrentTween then
         pcall(function() _G.CurrentTween:Cancel() end)
         _G.CurrentTween = nil
@@ -1171,12 +1176,25 @@ _tp = function(target)
         hum.PlatformStand = false
     end
     
+    -- Ensure BodyClip exists with high MaxForce to suspend gravity and prevent anti-cheat reset
+    local clip = rootPart:FindFirstChild("BodyClip")
+    if not clip then
+        clip = Instance.new("BodyVelocity")
+        clip.Name = "BodyClip"
+        clip.MaxForce = Vector3.new(1000000, 1000000, 1000000)
+        clip.Velocity = Vector3.new(0, 0, 0)
+        clip.Parent = rootPart
+    else
+        clip.MaxForce = Vector3.new(1000000, 1000000, 1000000)
+        clip.Velocity = Vector3.new(0, 0, 0)
+    end
+
     -- Recalculate distance and speed
     distance = (gg.Position - rootPart.Position).Magnitude
     local speed = _G.TweenSpeed or (Settings and Settings["Tween Speed"]) or 200
     if speed <= 0 then speed = 200 end
     
-    -- Always sync block to current rootPart before starting tween (prevents position jump)
+    -- Always sync block to current rootPart before starting tween
     block.CFrame = rootPart.CFrame
     
     local tweenInfo = TweenInfo.new(distance / speed, Enum.EasingStyle.Linear)
@@ -1192,26 +1210,30 @@ _tp = function(target)
     
     task.spawn(function() 
         while tween.PlaybackState == Enum.PlaybackState.Playing do 
-            if not shouldTween then 
-                tween:Cancel()
+            if not shouldTween or _G.TweenGen ~= myGen then 
+                pcall(function() tween:Cancel() end)
                 break 
             end 
             task.wait(0.05) 
         end 
-        -- Clean up: reset shouldTween so player can move freely after tween
-        if _G.CurrentTween == tween then
+        -- Clean up only if this is still the active tween generation
+        if _G.TweenGen == myGen then
             _G.CurrentTween = nil
             _G.CurrentTweenTarget = nil
-        end
-        -- Reset farm state so character isn't permanently locked
-        if _G.CurrentTween == nil then
-            shouldTween = false
-            getgenv().OnFarm = false
-            -- Clean up any leftover BodyClip
+            block.CFrame = gg
             pcall(function()
-                local hrp2 = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-                if hrp2 and hrp2:FindFirstChild("BodyClip") then hrp2.BodyClip:Destroy() end
+                if rootPart and rootPart.Parent then
+                    rootPart.CFrame = gg
+                end
             end)
+            -- Clean up BodyClip only if no ongoing farming feature requires it
+            if not (getgenv().OnFarm or _G.FarmEliteHunt or _G.Level or _G.AutoRaidCastle or _G.FarmMagnetToken) then
+                shouldTween = false
+                pcall(function()
+                    local hrp2 = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp2 and hrp2:FindFirstChild("BodyClip") then hrp2.BodyClip:Destroy() end
+                end)
+            end
         end
     end)
     
@@ -1233,6 +1255,7 @@ local StopTween = function(v)
     if not v then
         shouldTween = false
         getgenv().OnFarm = false
+        _G.TweenGen = (_G.TweenGen or 0) + 1
         if _G.CurrentTween then
             pcall(function() _G.CurrentTween:Cancel() end)
             _G.CurrentTween = nil
@@ -1244,8 +1267,11 @@ local StopTween = function(v)
         _G.CurrentTweenTarget = nil
         pcall(function()
             local hrp = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-            if hrp and hrp:FindFirstChild("BodyClip") then
-                hrp.BodyClip:Destroy()
+            if hrp then
+                if block then block.CFrame = hrp.CFrame end
+                if hrp:FindFirstChild("BodyClip") then
+                    hrp.BodyClip:Destroy()
+                end
             end
         end)
     end
@@ -4404,54 +4430,216 @@ end)
 
 EliteQ = Tabs.Main:AddToggle({
     Name = "Auto Farm Elite",
-    Description = "",
+    Description = "Automatically accept Elite Hunter quest and hunt Diablo, Deandre, or Urban",
     Default = false,
     Callback = function(Value)
-    _G.FarmEliteHunt = Value
-end})
-
-spawn(function()
-    while task.wait(0.5) do
-        if _G.FarmEliteHunt then
-            pcall(function()
-                local qGui = GetActiveQuestGui()
-                local qTitle = GetActiveQuestTitle() or ""
-
-                if not qGui then
-                    local result = replicated.Remotes.CommF_:InvokeServer("EliteHunter")
-                    if result == nil or string.find(tostring(result), "Cooldown") then
-                        task.wait(8)
-                        return
-                    end
-                    task.wait(1)
-                else
-                    local eliteName = nil
-                    for _, name in ipairs({"Diablo", "Urban", "Deandre"}) do
-                        if string.find(qTitle, name) then
-                            eliteName = name
-                            break
-                        end
-                    end
-
-                    if eliteName then
-                        local boss = GetConnectionEnemies(eliteName)
-                        if boss and boss:FindFirstChild("HumanoidRootPart") then
-                            local bRoot = boss.HumanoidRootPart
-                            _tp(bRoot.CFrame * CFrame.new(0, 25, 0))
-                            EquipWeapon(_G.SelectWeapon)
-                            if typeof(AttackNoCoolDown) == "function" then AttackNoCoolDown() end
-                        else
-                            task.wait(2)
-                        end
-                    else
-                        replicated.Remotes.CommF_:InvokeServer("AbandonQuest")
-                        task.wait(1)
-                    end
-                end
-            end)
+        _G.FarmEliteHunt = Value
+        if not Value then
+            shouldTween = false
+            if StopTween then StopTween() end
         end
     end
-end)
+})
+
+do
+    local _EliteBossList = { "Diablo", "Deandre", "Urban" }
+    local _EliteIslands = {
+        ["Floating Turtle"] = {
+            CFrame = CFrame.new(-12000, 331, -8500),
+            Spots = {
+                CFrame.new(-13232, 332, -7626),
+                CFrame.new(-12053, 332, -9000),
+                CFrame.new(-10500, 332, -8500),
+            }
+        },
+        ["Hydra Island"] = {
+            CFrame = CFrame.new(5228, 604, 345),
+            Spots = {
+                CFrame.new(5228, 604, 345),
+                CFrame.new(5700, 610, -280),
+            }
+        },
+        ["Port Town"] = {
+            CFrame = CFrame.new(-290, 44, 5450),
+            Spots = {
+                CFrame.new(-290, 44, 5450),
+                CFrame.new(-450, 110, 5950),
+            }
+        },
+        ["Great Tree"] = {
+            CFrame = CFrame.new(2200, 70, -7100),
+            Spots = {
+                CFrame.new(2200, 70, -7100),
+                CFrame.new(2682, 1682, -7190),
+            }
+        }
+    }
+
+    local function _FindEliteBoss(targetName)
+        local candidates = {}
+        if targetName and targetName ~= "" then
+            table.insert(candidates, targetName)
+        else
+            for _, n in ipairs(_EliteBossList) do table.insert(candidates, n) end
+        end
+
+        local en = workspace:FindFirstChild("Enemies")
+        if en then
+            for _, v in ipairs(en:GetChildren()) do
+                if v:IsA("Model") and Attack.Alive(v) then
+                    local vName = v.Name:lower()
+                    for _, cName in ipairs(candidates) do
+                        if vName:find(cName:lower(), 1, true) then return v end
+                    end
+                end
+            end
+        end
+
+        local ch = workspace:FindFirstChild("Characters")
+        if ch then
+            for _, v in ipairs(ch:GetChildren()) do
+                if v:IsA("Model") and Attack.Alive(v) and not game:GetService("Players"):GetPlayerFromCharacter(v) then
+                    local vName = v.Name:lower()
+                    for _, cName in ipairs(candidates) do
+                        if vName:find(cName:lower(), 1, true) then return v end
+                    end
+                end
+            end
+        end
+
+        for _, v in ipairs(replicated:GetChildren()) do
+            if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") then
+                local vName = v.Name:lower()
+                for _, cName in ipairs(candidates) do
+                    if vName:find(cName:lower(), 1, true) then return v end
+                end
+            end
+        end
+
+        return nil
+    end
+
+    local _lastDialogue = ""
+    local _lastCheckTick = 0
+
+    task.spawn(function()
+        while task.wait(0.2) do
+            if _G.FarmEliteHunt then
+                pcall(function()
+                    local char = plr.Character
+                    if not char then return end
+                    local root = char:FindFirstChild("HumanoidRootPart")
+                    local hum = char:FindFirstChild("Humanoid")
+                    if not root or not hum or hum.Health <= 0 then return end
+
+                    local qGui = GetActiveQuestGui()
+                    local qTitle = (GetActiveQuestTitle() or ""):lower()
+
+                    local hasEliteQuest = false
+                    local currentEliteBoss = nil
+
+                    if qGui then
+                        for _, name in ipairs(_EliteBossList) do
+                            if qTitle:find(name:lower(), 1, true) then
+                                hasEliteQuest = true
+                                currentEliteBoss = name
+                                break
+                            end
+                        end
+                        if not hasEliteQuest then
+                            for _, desc in ipairs(qGui:GetDescendants()) do
+                                if desc:IsA("TextLabel") and desc.Visible then
+                                    local txt = desc.Text:lower()
+                                    for _, name in ipairs(_EliteBossList) do
+                                        if txt:find(name:lower(), 1, true) then
+                                            hasEliteQuest = true
+                                            currentEliteBoss = name
+                                            break
+                                        end
+                                    end
+                                end
+                                if hasEliteQuest then break end
+                            end
+                        end
+                    end
+
+                    -- Accept quest from Elite Hunter if not active
+                    if not hasEliteQuest then
+                        if tick() - _lastCheckTick > 4 then
+                            _lastCheckTick = tick()
+                            local res = replicated.Remotes.CommF_:InvokeServer("EliteHunter")
+                            _lastDialogue = tostring(res or "")
+                            local dLower = _lastDialogue:lower()
+                            if dLower:find("come back later") or dLower:find("cooldown") or dLower:find("don't have anything") or dLower:find("dont have anything") then
+                                task.wait(5)
+                                return
+                            end
+                        end
+                    end
+
+                    -- Check if boss is already spawned and streamed in
+                    local boss = _FindEliteBoss(currentEliteBoss)
+                    if boss then
+                        local bRoot = boss:FindFirstChild("HumanoidRootPart") or boss.PrimaryPart
+                        local bHum = boss:FindFirstChild("Humanoid")
+                        if bRoot and bHum and bHum.Health > 0 then
+                            repeat
+                                task.wait()
+                                Attack.Kill(boss, _G.FarmEliteHunt)
+                                SmartEquipWeapon()
+                                FastAttack.Attack()
+                            until not _G.FarmEliteHunt or not boss.Parent or not Attack.Alive(boss) or not GetActiveQuestGui()
+                            return
+                        elseif bRoot then
+                            _tp(bRoot.CFrame * CFrame.new(0, 25, 0))
+                            task.wait(0.5)
+                            return
+                        end
+                    end
+
+                    -- Boss not found yet: determine island from dialogue and travel to spawn spots
+                    local targetIsland = nil
+                    local diag = _lastDialogue:lower()
+                    if diag:find("turtle") then
+                        targetIsland = _EliteIslands["Floating Turtle"]
+                    elseif diag:find("hydra") then
+                        targetIsland = _EliteIslands["Hydra Island"]
+                    elseif diag:find("port") then
+                        targetIsland = _EliteIslands["Port Town"]
+                    elseif diag:find("tree") then
+                        targetIsland = _EliteIslands["Great Tree"]
+                    end
+
+                    if targetIsland then
+                        for _, spot in ipairs(targetIsland.Spots) do
+                            if not _G.FarmEliteHunt then break end
+                            if _FindEliteBoss(currentEliteBoss) then break end
+                            _tp(spot * CFrame.new(0, 30, 0))
+                            pcall(function()
+                                if plr.RequestStreamAroundAsync then
+                                    plr:RequestStreamAroundAsync(spot.Position)
+                                end
+                            end)
+                            task.wait(1.5)
+                        end
+                    else
+                        for _, isl in pairs(_EliteIslands) do
+                            if not _G.FarmEliteHunt then break end
+                            if _FindEliteBoss(currentEliteBoss) then break end
+                            _tp(isl.CFrame * CFrame.new(0, 30, 0))
+                            pcall(function()
+                                if plr.RequestStreamAroundAsync then
+                                    plr:RequestStreamAroundAsync(isl.CFrame.Position)
+                                end
+                            end)
+                            task.wait(2)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+end
 
 EliteH = Tabs.Main:AddToggle({
 	Name = "Auto Farm Elite + Hop",
@@ -4606,7 +4794,7 @@ spawn(function()
       pcall(function()
         local Summoner = workspace.Map["Boat Castle"]:FindFirstChild("Summoner");
         if Summoner and Summoner:FindFirstChild("Circle") then 
-          for i,v in pairs(Summoner:FindFirstChild("Circle"):GetChildren()) do 
+          local _sc = Summoner:FindFirstChild("Circle") for i,v in pairs(_sc and _sc:GetChildren() or {}) do 
             if v.Name == "Part" then 
             local TogglesPart = v:FindFirstChild("Part");
               if VaildColor(TogglesPart) == false then 
@@ -5083,22 +5271,27 @@ end)
 local EyeStatus = Tabs.Main:AddParagraph("Check Status Eyes", "")
 
 function Check_Eye()
-    local e = workspace.Map.TikiOutpost.IslandModel
-    local eyes = {
-        e.Eye1,
-        e.Eye2,
-        e.IslandChunks.E.Eye3,
-        e.IslandChunks.E.Eye4
-    }
-
-    local count = 0
-    for _, eye in ipairs(eyes) do
-        if eye and eye.Transparency ~= 1 then
-            count = count + 1
+    local ok, count, isFull = pcall(function()
+        local tiki = workspace.Map:FindFirstChild("TikiOutpost")
+        local e = tiki and tiki:FindFirstChild("IslandModel")
+        if not e then return 0, false end
+        local eChunks = e:FindFirstChild("IslandChunks")
+        local eE = eChunks and eChunks:FindFirstChild("E")
+        local eyes = {
+            e:FindFirstChild("Eye1"),
+            e:FindFirstChild("Eye2"),
+            eE and eE:FindFirstChild("Eye3"),
+            eE and eE:FindFirstChild("Eye4")
+        }
+        local cnt = 0
+        for _, eye in ipairs(eyes) do
+            if eye and eye.Transparency ~= 1 then
+                cnt = cnt + 1
+            end
         end
-    end
-
-    local isFull = (count == 4)
+        return cnt, (cnt == 4)
+    end)
+    if not ok then return 0, false end
     return count, isFull
 end
 
@@ -6983,7 +7176,7 @@ spawn(function()
                      elseif replicated:FindFirstChild("Cake Queen") and replicated:FindFirstChild("Cake Queen").Humanoid.Health > 0 then
                        _tp(replicated:FindFirstChild("Cake Queen").HumanoidRootPart.CFrame * CFrame.new(0,30,0))
                      else
-                   if (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - workspace.Map.HeavenlyDimension.Spawn.Position).Magnitude <= 1000 then
+                   if workspace.Map:FindFirstChild("HeavenlyDimension") and (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - workspace.Map.HeavenlyDimension.Spawn.Position).Magnitude <= 1000 then
                      for i,v in pairs(workspace.Map.HeavenlyDimension.Exit:GetChildren()) do
                        Ex = i
                      end
@@ -8436,7 +8629,10 @@ spawn(function()
             end
           end
         else
-          _tp(workspace.Map.MysticIsland.Center.CFrame*CFrame.new(0,300,0))
+          local _mi2 = workspace.Map:FindFirstChild("MysticIsland")
+          if _mi2 and _mi2:FindFirstChild("Center") then
+            _tp(_mi2.Center.CFrame*CFrame.new(0,300,0))
+          end
         end
       end)
     end
@@ -8509,9 +8705,10 @@ spawn(function()
   pcall(function()
     while wait(0.1) do
       if _G.TPGEAR then
-        for i,v in pairs(workspace.Map:FindFirstChild('MysticIsland'):GetChildren()) do
-          if v.Name == "Part" then
-            if v.ClassName == "MeshPart" then _tp(v.CFrame) end
+        local _miTp = workspace.Map:FindFirstChild('MysticIsland')
+          for i,v in pairs(_miTp and _miTp:GetChildren() or {}) do
+            if v.Name == "Part" then
+              if v.ClassName == "MeshPart" then _tp(v.CFrame) end
           end
         end
       end
@@ -8529,10 +8726,11 @@ spawn(function()
   pcall(function()
     while wait(Sec) do
       if _G.can then
-        for i,v in pairs(workspace.Map:FindFirstChild('MysticIsland'):GetChildren()) do
-          if v.Name == "Part" then
-            if v.ClassName == "MeshPart" then
-              v.Transparency = 0
+        local _miCan = workspace.Map:FindFirstChild('MysticIsland')
+          for i,v in pairs(_miCan and _miCan:GetChildren() or {}) do
+            if v.Name == "Part" then
+              if v.ClassName == "MeshPart" then
+                v.Transparency = 0
             else 
               v.Transparency = 1
             end
@@ -10691,7 +10889,7 @@ end
 
 
 gearEsp = function()
-    for _,v in pairs(workspace.Map.MysticIsland:GetDescendants()) do
+    for _,v in pairs(workspace.Map:FindFirstChild("MysticIsland") and workspace.Map.MysticIsland:GetDescendants() or {}) do
         pcall(function()
             if ESPGear then
                 if v.Name == "Part" and v.Material == Enum.Material.Neon then
@@ -11176,7 +11374,7 @@ Tabs.Esp:AddToggle({
     Callback = function(Value)
         ESPGear = Value
         if not Value then
-            for _,v in pairs(workspace.Map.MysticIsland:GetDescendants()) do
+            for _,v in pairs(workspace.Map:FindFirstChild("MysticIsland") and workspace.Map.MysticIsland:GetDescendants() or {}) do
                 pcall(function()
                     if v:FindFirstChild("NameEsp") then
                         v:FindFirstChild("NameEsp"):Destroy()
@@ -12687,7 +12885,7 @@ Tabs.Combat:AddToggle({
 })
 local function NoCooldown()
     local dodgeScript = game.Players.LocalPlayer.Character:WaitForChild("Dodge")
-    for i, v in next, getgc() do
+    for i, v in next, (getgc and getgc() or {}) do
         if typeof(v) == "function" then
             local funcEnv = getfenv(v)
             if funcEnv.script == dodgeScript then
