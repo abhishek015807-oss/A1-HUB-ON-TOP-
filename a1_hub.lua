@@ -1243,7 +1243,7 @@ _tp = function(target)
                 end
             end)
             -- Clean up BodyClip only if no ongoing farming feature requires it
-            if not (getgenv().OnFarm or _G.FarmEliteHunt or _G.Level or _G.AutoRaidCastle or _G.FarmMagnetToken) then
+            if not (getgenv().OnFarm or _G.FarmEliteHunt or _G.Level or _G.AutoRaidCastle or _G.FarmMagnetToken or _G.AutoFarm_Bone or _G.AutoHytHallow) then
                 shouldTween = false
                 pcall(function()
                     local hrp2 = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
@@ -1316,7 +1316,7 @@ end
 spawn(function()
   while task.wait() do
     pcall(function()
-      if _G.SailBoat_Hydra or _G.WardenBoss or _G.AutoFactory or _G.HighestMirage or _G.HCM or _G.PGB or _G.Leviathan1 or _G.UPGDrago or _G.Complete_Trials or _G.TpDrago_Prehis or _G.BuyDrago or _G.AutoFireFlowers or _G.DT_Uzoth or _G.AutoBerry or _G.Prefully or _G.Prehis_Find or _G.Prehis_Skills or _G.Prehis_DB or _G.Prehis_DE or _G.FarmBlazeEM or _G.Dojoo or _G.CollectPresent or _G.AutoLawKak or _G.TpLab or _G.AutoPhoenixF or _G.AutoFarmChest or _G.AutoHytHallow or _G.LongsWord or _G.BlackSpikey or _G.AutoHolyTorch or _G.TrainDrago  or _G.AutoSaber or _G.FarmMastery_Dev or _G.CitizenQuest or _G.AutoEctoplasm or _G.KeysRen or _G.Auto_Rainbow_Haki or _G.obsFarm or _G.AutoBigmom or _G.Doughv2 or _G.AuraBoss or _G.Raiding or _G.Auto_Cavender or _G.TpPly or _G.Bartilo_Quest or _G.Level or _G.FarmEliteHunt or _G.AutoZou or _G.AutoFarm_Bone or getgenv().AutoMaterial or _G.CraftVM or _G.FrozenTP or _G.TPDoor or _G.AcientOne or _G.AutoFarmNear or _G.AutoRaidCastle or _G.DarkBladev3 or _G.AutoFarmRaid or _G.Auto_Cake_Prince or _G.Addealer or _G.TPNpc or _G.TwinHook or _G.FindMirage or _G.FarmChestM or _G.Shark or _G.TerrorShark or _G.Piranha or _G.MobCrew or _G.SeaBeast1 or _G.FishBoat or _G.AutoPole or _G.AutoPoleV2 or _G.Auto_SuperHuman or _G.AutoDeathStep or _G.Auto_SharkMan_Karate or _G.Auto_Electric_Claw or _G.AutoDragonTalon or _G.Auto_Def_DarkCoat or _G.Auto_God_Human or _G.Auto_Tushita or _G.AutoMatSoul or _G.AutoKenVTWO or _G.AutoSerpentBow or _G.AutoFMon or _G.Auto_Soul_Guitar or _G.TPGEAR or _G.AutoSaw or _G.AutoTridentW2 or _G.AutoEvoRace or _G.AutoGetQuestBounty or _G.MarinesCoat or _G.TravelDres or _G.Defeating or _G.DummyMan or _G.Auto_Yama or _G.Auto_SwanGG or _G.SwanCoat or _G.AutoEcBoss or _G.Auto_Mink or _G.Auto_Human or _G.Auto_Skypiea or _G.Auto_Fish or _G.CDK_TS or _G.CDK_YM or _G.CDK or _G.AutoFarmGodChalice or _G.AutoFistDarkness or _G.AutoMiror or _G.Teleport or _G.AutoKilo or _G.AutoGetUsoap or _G.Praying or _G.TryLucky or _G.AutoColShad or _G.AutoUnHaki or _G.Auto_DonAcces or _G.AutoRipIngay or _G.DragoV3 or _G.DragoV1 or _G.SailBoats or NextIs or _G.FarmGodChalice or _G.IceBossRen or senth or senth2 or _G.Lvthan or _G.beasthunter or _G.DangerLV or _G.Relic123 or _G.tweenKitsune or _G.Collect_Ember or _G.AutofindKitIs or _G.snaguine or _G.TwFruits or _G.tweenKitShrine or _G.Tp_LgS or _G.Tp_MasterA or _G.tweenShrine or _G.FarmMastery_G or _G.FarmMastery_S or _G.FarmBoss or _G.AutoFarmAllBoss or _G.AutoFishSlap or _G.FarmTyrant or _G.FarmPhaBinh or _G.AutoSpawnCP or _G.AutoBerryH or _G.AutoChestBP or _G.FarmEliteHop or _G.AutoHop_Dough or _G.AutoDoughKing or _G.AutoAttackDoughKing or (_G.CurrentTween and _G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing) or _G.Auto_StartRaid or _G.AutoChipFruit or _G.AutoChipBeli or _G.StartEvent or _G.AutoMysticIsland or _G.AutoPlayerHunter or _G.SafeMode or _G.AutoKillMob or _G.AutoStartPrehistoric or _G.AutoUnHaki or _G.AutoAttackRipIndra or _G.AutoFarmIsland or _G.AutoFarmDungeon or _G.AutoFarmCandy or _G.AutoTP_Gift or _G.AutoTPGift or _G.AutoTPAndCollect or _G.MasterAutoLevel or _G.MasterAutoCandy or _G.TPFloor1 or _G.TPFloor2 or _G.TPFloor3 or _G.TPFloor4 then
+      if _G.SailBoat_Hydra or _G.WardenBoss or _G.AutoFactory or _G.HighestMirage or _G.HCM or _G.PGB or _G.Leviathan1 or _G.UPGDrago or _G.Complete_Trials or _G.TpDrago_Prehis or _G.BuyDrago or _G.AutoFireFlowers or _G.DT_Uzoth or _G.AutoBerry or _G.Prefully or _G.Prehis_Find or _G.Prehis_Skills or _G.Prehis_DB or _G.Prehis_DE or _G.FarmBlazeEM or _G.Dojoo or _G.CollectPresent or _G.AutoLawKak or _G.TpLab or _G.AutoPhoenixF or _G.AutoFarmChest or _G.AutoHytHallow or _G.LongsWord or _G.BlackSpikey or _G.AutoHolyTorch or _G.TrainDrago  or _G.AutoSaber or _G.FarmMastery_Dev or _G.CitizenQuest or _G.AutoEctoplasm or _G.KeysRen or _G.Auto_Rainbow_Haki or _G.obsFarm or _G.AutoBigmom or _G.Doughv2 or _G.AuraBoss or _G.Raiding or _G.Auto_Cavender or _G.TpPly or _G.Bartilo_Quest or _G.Level or _G.FarmEliteHunt or _G.AutoZou or _G.FarmMagnetToken or _G.AutoFarm_Bone or getgenv().AutoMaterial or _G.CraftVM or _G.FrozenTP or _G.TPDoor or _G.AcientOne or _G.AutoFarmNear or _G.AutoRaidCastle or _G.DarkBladev3 or _G.AutoFarmRaid or _G.Auto_Cake_Prince or _G.Addealer or _G.TPNpc or _G.TwinHook or _G.FindMirage or _G.FarmChestM or _G.Shark or _G.TerrorShark or _G.Piranha or _G.MobCrew or _G.SeaBeast1 or _G.FishBoat or _G.AutoPole or _G.AutoPoleV2 or _G.Auto_SuperHuman or _G.AutoDeathStep or _G.Auto_SharkMan_Karate or _G.Auto_Electric_Claw or _G.AutoDragonTalon or _G.Auto_Def_DarkCoat or _G.Auto_God_Human or _G.Auto_Tushita or _G.AutoMatSoul or _G.AutoKenVTWO or _G.AutoSerpentBow or _G.AutoFMon or _G.Auto_Soul_Guitar or _G.TPGEAR or _G.AutoSaw or _G.AutoTridentW2 or _G.AutoEvoRace or _G.AutoGetQuestBounty or _G.MarinesCoat or _G.TravelDres or _G.Defeating or _G.DummyMan or _G.Auto_Yama or _G.Auto_SwanGG or _G.SwanCoat or _G.AutoEcBoss or _G.Auto_Mink or _G.Auto_Human or _G.Auto_Skypiea or _G.Auto_Fish or _G.CDK_TS or _G.CDK_YM or _G.CDK or _G.AutoFarmGodChalice or _G.AutoFistDarkness or _G.AutoMiror or _G.Teleport or _G.AutoKilo or _G.AutoGetUsoap or _G.Praying or _G.TryLucky or _G.AutoColShad or _G.AutoUnHaki or _G.Auto_DonAcces or _G.AutoRipIngay or _G.DragoV3 or _G.DragoV1 or _G.SailBoats or NextIs or _G.FarmGodChalice or _G.IceBossRen or senth or senth2 or _G.Lvthan or _G.beasthunter or _G.DangerLV or _G.Relic123 or _G.tweenKitsune or _G.Collect_Ember or _G.AutofindKitIs or _G.snaguine or _G.TwFruits or _G.tweenKitShrine or _G.Tp_LgS or _G.Tp_MasterA or _G.tweenShrine or _G.FarmMastery_G or _G.FarmMastery_S or _G.FarmBoss or _G.AutoFarmAllBoss or _G.AutoFishSlap or _G.FarmTyrant or _G.FarmPhaBinh or _G.AutoSpawnCP or _G.AutoBerryH or _G.AutoChestBP or _G.FarmEliteHop or _G.AutoHop_Dough or _G.AutoDoughKing or _G.AutoAttackDoughKing or (_G.CurrentTween and _G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing) or _G.Auto_StartRaid or _G.AutoChipFruit or _G.AutoChipBeli or _G.StartEvent or _G.AutoMysticIsland or _G.AutoPlayerHunter or _G.SafeMode or _G.AutoKillMob or _G.AutoStartPrehistoric or _G.AutoUnHaki or _G.AutoAttackRipIndra or _G.AutoFarmIsland or _G.AutoFarmDungeon or _G.AutoFarmCandy or _G.AutoTP_Gift or _G.AutoTPGift or _G.AutoTPAndCollect or _G.MasterAutoLevel or _G.MasterAutoCandy or _G.TPFloor1 or _G.TPFloor2 or _G.TPFloor3 or _G.TPFloor4 then
         shouldTween = true
         if not plr.Character.HumanoidRootPart:FindFirstChild("BodyClip") then
           local Noclip = Instance.new("BodyVelocity")
@@ -3555,19 +3555,31 @@ Tabs.Main:AddSection("Magnet Event")
 
 local MagnetStatus = Tabs.Main:AddParagraph("Magnet Event Status", "Status: Idle | Magnetized Mobs: 0")
 
-local function IsMagnetizedName(name)
-    if not name or typeof(name) ~= "string" then return false end
-    local lower = name:lower()
-    return string.find(lower, "magnetized", 1, true) ~= nil
-end
-
-local function IsValidMagnetizedEnemy(enemy)
+local function IsMagnetizedEnemy(enemy)
     if not enemy or not enemy.Parent then return false end
     if enemy:GetAttribute("IsBoat") or enemy:GetAttribute("Dead") == true then return false end
     local char = plr.Character
     if enemy == char or game:GetService("Players"):GetPlayerFromCharacter(enemy) then return false end
 
-    if not IsMagnetizedName(enemy.Name) then return false end
+    local name = enemy.Name
+    local lower = typeof(name) == "string" and name:lower() or ""
+    local isMag = string.find(lower, "magnet", 1, true) ~= nil 
+        or enemy:GetAttribute("Magnetized") == true
+        or enemy:FindFirstChild("MagnetAura", true) ~= nil
+
+    if not isMag then
+        local head = enemy:FindFirstChild("Head")
+        if head then
+            for _, d in ipairs(head:GetDescendants()) do
+                if d:IsA("TextLabel") and d.Text:lower():find("magnet") then
+                    isMag = true
+                    break
+                end
+            end
+        end
+    end
+
+    if not isMag then return false end
 
     local hum = enemy:FindFirstChild("Humanoid") or enemy:FindFirstChildOfClass("Humanoid")
     local root = enemy:FindFirstChild("HumanoidRootPart") or enemy.PrimaryPart
@@ -3580,7 +3592,6 @@ end
 local function GetMagnetizedEnemies()
     local mobs = {}
     local seen = {}
-    -- Primary: check dedicated folders
     local folders = {
         workspace:FindFirstChild("Enemies"),
         workspace:FindFirstChild("Characters"),
@@ -3589,16 +3600,15 @@ local function GetMagnetizedEnemies()
     for _, folder in ipairs(folders) do
         if folder then
             for _, enemy in ipairs(folder:GetChildren()) do
-                if not seen[enemy] and IsValidMagnetizedEnemy(enemy) then
+                if not seen[enemy] and IsMagnetizedEnemy(enemy) then
                     seen[enemy] = true
                     table.insert(mobs, enemy)
                 end
             end
         end
     end
-    -- Fallback: scan entire workspace for any missed magnetized humanoid models
     for _, obj in ipairs(workspace:GetChildren()) do
-        if not seen[obj] and obj:IsA("Model") and IsValidMagnetizedEnemy(obj) then
+        if not seen[obj] and obj:IsA("Model") and IsMagnetizedEnemy(obj) then
             seen[obj] = true
             table.insert(mobs, obj)
         end
@@ -3606,9 +3616,84 @@ local function GetMagnetizedEnemies()
     return mobs
 end
 
+local function GetMagnetTokens()
+    local tokens = {}
+    local ie = workspace:FindFirstChild("_WorldOrigin") and workspace._WorldOrigin:FindFirstChild("InteractiveEffects")
+    if ie then
+        local tf = ie:FindFirstChild("MagnetEventTokens")
+        if tf then
+            local myFolder = tf:FindFirstChild(plr.Name)
+            if myFolder then
+                for _, c in ipairs(myFolder:GetChildren()) do
+                    if c:IsA("BasePart") or (c:IsA("Model") and c.PrimaryPart) then
+                        table.insert(tokens, c)
+                    end
+                end
+            end
+            for _, other in ipairs(tf:GetChildren()) do
+                if other:IsA("BasePart") or (other:IsA("Model") and other.PrimaryPart) then
+                    table.insert(tokens, other)
+                end
+            end
+        end
+        local sf = ie:FindFirstChild("MagnetFruitScraps")
+        if sf then
+            for _, c in ipairs(sf:GetChildren()) do
+                if c.Name ~= "Test Rig" and (c:IsA("BasePart") or (c:IsA("Model") and c.PrimaryPart)) then
+                    table.insert(tokens, c)
+                end
+            end
+        end
+    end
+    return tokens
+end
+
+local function GetMagnetPatrolList()
+    local isW3 = sea3 or (game.PlaceId == 7449423635 or game.PlaceId == 100117331123089)
+    local isW2 = sea2 or (game.PlaceId == 4442272183 or game.PlaceId == 79091703265657)
+    if isW3 then
+        return {
+            Vector3.new(-290, 44, 5450),
+            Vector3.new(5228, 604, 345),
+            Vector3.new(2682, 1682, -7190),
+            Vector3.new(-12000, 331, -8500),
+            Vector3.new(-9515, 142, 5536),
+            Vector3.new(-1145, 58, -14450),
+            Vector3.new(-16548, 56, -172),
+            Vector3.new(-5436, 815, -2701)
+        }
+    elseif isW2 then
+        return {
+            Vector3.new(-456, 73, 1836),
+            Vector3.new(-380, 73, 298),
+            Vector3.new(-2448, 73, -3215),
+            Vector3.new(-5430, 48, -794),
+            Vector3.new(1385, 454, -1299),
+            Vector3.new(-5983, 16, -5076),
+            Vector3.new(5567, 28, -6812),
+            Vector3.new(-3053, 237, -10147)
+        }
+    else
+        return {
+            Vector3.new(1013, 16, 1422),
+            Vector3.new(-2573, 7, 2046),
+            Vector3.new(-1600, 36, 150),
+            Vector3.new(-1100, 4, 3850),
+            Vector3.new(1090, 7, 4370),
+            Vector3.new(1200, 28, -1500),
+            Vector3.new(-4500, 20, 4250),
+            Vector3.new(-4840, 718, -2620),
+            Vector3.new(4840, 6, 743),
+            Vector3.new(-1427, 8, -2792),
+            Vector3.new(-5260, 9, 8507),
+            Vector3.new(5127, 4, 4038)
+        }
+    end
+end
+
 Tabs.Main:AddToggle({
     Name = "Farm Magnet Token",
-    Description = "Continuously hunt and kill all Magnetized enemies in the current world",
+    Description = "Hunt Magnetized enemies & collect tokens across islands in the current world",
     Default = false,
     Callback = function(Value)
         _G.FarmMagnetToken = Value
@@ -3632,9 +3717,9 @@ Tabs.Main:AddButton({
                 return
             end
             for _, enemy in ipairs(targets) do
-                if IsValidMagnetizedEnemy(enemy) then
+                if IsMagnetizedEnemy(enemy) then
                     local eHum = enemy:FindFirstChild("Humanoid")
-                    while IsValidMagnetizedEnemy(enemy) and eHum and eHum.Health > 0 do
+                    while IsMagnetizedEnemy(enemy) and eHum and eHum.Health > 0 do
                         Attack.Kill(enemy, true)
                         SmartEquipWeapon()
                         FastAttack.Attack()
@@ -3648,7 +3733,8 @@ Tabs.Main:AddButton({
 })
 
 task.spawn(function()
-    while task.wait(0.15) do
+    local patrolIndex = 1
+    while task.wait(0.12) do
         if _G.FarmMagnetToken then
             pcall(function()
                 local char = plr.Character
@@ -3656,6 +3742,26 @@ task.spawn(function()
                 local root = char:FindFirstChild("HumanoidRootPart")
                 local hum = char:FindFirstChild("Humanoid")
                 if not root or not hum or hum.Health <= 0 then return end
+
+                local droppedTokens = GetMagnetTokens()
+                if #droppedTokens > 0 then
+                    MagnetStatus:SetDesc("Status: Collecting Magnet Tokens (" .. #droppedTokens .. " found)")
+                    for _, token in ipairs(droppedTokens) do
+                        if not _G.FarmMagnetToken then break end
+                        local tPart = token:IsA("BasePart") and token or (token:IsA("Model") and token.PrimaryPart)
+                        if tPart and tPart.Parent then
+                            _tp(tPart.CFrame)
+                            pcall(function()
+                                if firetouchinterest then
+                                    firetouchinterest(root, tPart, 0)
+                                    firetouchinterest(root, tPart, 1)
+                                end
+                            end)
+                            task.wait(0.1)
+                        end
+                    end
+                    return
+                end
 
                 local targets = GetMagnetizedEnemies()
                 if #targets > 0 then
@@ -3677,15 +3783,36 @@ task.spawn(function()
                         local tHum = nearestTarget:FindFirstChild("Humanoid")
                         if tRoot and tHum and tHum.Health > 0 then
                             MagnetStatus:SetDesc("Status: Farming " .. nearestTarget.Name .. " (HP: " .. math.floor(tHum.Health) .. " | " .. #targets .. " left)")
-                            -- Use Attack.Kill for reliable positioning + weapon + attack
                             Attack.Kill(nearestTarget, true)
-                            -- Also fire FastAttack for extra hit coverage
                             SmartEquipWeapon()
                             FastAttack.Attack()
                         end
                     end
                 else
-                    MagnetStatus:SetDesc("Status: Scanning world for Magnetized enemies (0 alive)")
+                    local patrolList = GetMagnetPatrolList()
+                    if #patrolList > 0 then
+                        local targetPos = patrolList[patrolIndex]
+                        local dist = (root.Position - targetPos).Magnitude
+                        if dist > 350 then
+                            MagnetStatus:SetDesc("Status: Patrolling Island (" .. patrolIndex .. "/" .. #patrolList .. ") | Dist: " .. math.floor(dist))
+                            _tp(CFrame.new(targetPos.X, targetPos.Y + 60, targetPos.Z))
+                            pcall(function()
+                                game:GetService("Workspace"):RequestStreamAroundAsync(targetPos)
+                            end)
+                        else
+                            pcall(function()
+                                game:GetService("Workspace"):RequestStreamAroundAsync(targetPos)
+                            end)
+                            MagnetStatus:SetDesc("Status: Scanning Island (" .. patrolIndex .. "/" .. #patrolList .. ") for Magnetized mobs...")
+                            task.wait(0.8)
+                            local found = GetMagnetizedEnemies()
+                            if #found == 0 then
+                                patrolIndex = (patrolIndex % #patrolList) + 1
+                            end
+                        end
+                    else
+                        MagnetStatus:SetDesc("Status: Waiting for Magnet Event / Scanning (0 alive)")
+                    end
                 end
             end)
         end
@@ -5129,77 +5256,140 @@ end)
 Tabs.Main:AddSection("Farming Bone")
 
 local CheckingBone = Tabs.Main:AddParagraph("Bones", "")
-spawn(function()
-    while wait(0.2) do
+task.spawn(function()
+    while task.wait(3) do
         pcall(function()
-            CheckingBone:SetDesc("Bones : " .. GetM("Bones"))
+            local count = replicated.Remotes.CommF_:InvokeServer("Bones", "Check")
+            if count ~= nil then
+                CheckingBone:SetDesc("Bones : " .. tostring(count))
+            end
         end)
     end
 end)
 
 Tabs.Main:AddToggle({
     Name = "Auto Farm Bone",
-    Description = "",
+    Description = "Automatically farms bones at Haunted Castle",
     Default = false,
     Callback = function(Value)
         _G.AutoFarm_Bone = Value
+        if not Value then
+            shouldTween = false
+            if _G.TweenCache then
+                pcall(function() _G.TweenCache:Cancel() end)
+            end
+        end
     end
 })
 
-spawn(function()
-    local BonesTable = {
-        "Reborn Skeleton",
-        "Living Zombie",
-        "Demonic Soul",
-        "Posessed Mummy"
+local function GetBoneEnemies()
+    local mobs = {}
+    local validNames = {
+        ["reborn skeleton"] = true,
+        ["living zombie"] = true,
+        ["demonic soul"] = true,
+        ["posessed mummy"] = true,
+        ["possessed mummy"] = true
     }
+    local function check(folder)
+        if not folder then return end
+        for _, enemy in ipairs(folder:GetChildren()) do
+            if IsValidLivingEnemy(enemy) then
+                local eName = enemy.Name:lower()
+                for vName in pairs(validNames) do
+                    if string.find(eName, vName, 1, true) then
+                        table.insert(mobs, enemy)
+                        break
+                    end
+                end
+            end
+        end
+    end
+    check(workspace:FindFirstChild("Enemies"))
+    check(workspace:FindFirstChild("Characters"))
+    return mobs
+end
 
+task.spawn(function()
     while task.wait(0.12) do
         if _G.AutoFarm_Bone then
             pcall(function()
                 local char = plr.Character
                 local root = char and char:FindFirstChild("HumanoidRootPart")
-                if not root then return end
+                local hum = char and char:FindFirstChild("Humanoid")
+                if not root or not hum or hum.Health <= 0 then return end
+
+                local hauntedCenter = Vector3.new(-9515, 142, 5536)
+                local distToHaunted = (root.Position - hauntedCenter).Magnitude
+
+                if distToHaunted > 1200 then
+                    _tp(CFrame.new(hauntedCenter.X, hauntedCenter.Y + 40, hauntedCenter.Z))
+                    pcall(function()
+                        game:GetService("Workspace"):RequestStreamAroundAsync(hauntedCenter)
+                        game:GetService("Workspace"):RequestStreamAroundAsync(Vector3.new(-8761, 142, 6050))
+                        game:GetService("Workspace"):RequestStreamAroundAsync(Vector3.new(-9516, 172, 6078))
+                    end)
+                    return
+                end
 
                 local questUI = GetActiveQuestGui()
-
                 if _G.AcceptQuestB and not questUI then
                     local questPos = CFrame.new(-9516.99316, 172.01718, 6078.46533)
                     if (questPos.Position - root.Position).Magnitude > 25 then
                         _tp(questPos)
+                        return
                     else
                         local questData = {
-                            {"StartQuest","HauntedQuest2",2},
-                            {"StartQuest","HauntedQuest2",1},
-                            {"StartQuest","HauntedQuest1",1},
-                            {"StartQuest","HauntedQuest1",2}
+                            {"StartQuest", "HauntedQuest2", 2},
+                            {"StartQuest", "HauntedQuest2", 1},
+                            {"StartQuest", "HauntedQuest1", 1},
+                            {"StartQuest", "HauntedQuest1", 2}
                         }
-                        replicated.Remotes.CommF_:InvokeServer(unpack(questData[math.random(1,#questData)]))
+                        replicated.Remotes.CommF_:InvokeServer(unpack(questData[math.random(1, #questData)]))
                     end
                 end
 
-                local cluster = {}
-                for _, enemy in ipairs(workspace.Enemies:GetChildren()) do
-                    if IsValidLivingEnemy(enemy) and table.find(BonesTable, enemy.Name) then
-                        table.insert(cluster, enemy)
-                    end
-                end
+                local cluster = GetBoneEnemies()
 
                 if #cluster > 0 then
+                    local nearestEnemy = nil
+                    local nearestDist = math.huge
                     local sumX, sumY, sumZ = 0, 0, 0
                     for _, m in ipairs(cluster) do
                         local r = m:FindFirstChild("HumanoidRootPart") or m.PrimaryPart
-                        sumX = sumX + r.Position.X
-                        sumY = sumY + r.Position.Y
-                        sumZ = sumZ + r.Position.Z
+                        if r then
+                            sumX = sumX + r.Position.X
+                            sumY = sumY + r.Position.Y
+                            sumZ = sumZ + r.Position.Z
+                            local d = (r.Position - root.Position).Magnitude
+                            if d < nearestDist then
+                                nearestDist = d
+                                nearestEnemy = m
+                            end
+                        end
                     end
                     local center = Vector3.new(sumX / #cluster, sumY / #cluster, sumZ / #cluster)
-                    _tp(CFrame.new(center.X, center.Y + 22, center.Z))
-                    GroupAreaMobs(cluster, center)
-                    EquipWeapon(_G.SelectWeapon)
-                    if typeof(AttackNoCoolDown) == "function" then AttackNoCoolDown() end
+                    local targetPos = nearestEnemy and (nearestEnemy:FindFirstChild("HumanoidRootPart") or nearestEnemy.PrimaryPart)
+                    local farmPos = targetPos and targetPos.Position or center
+
+                    _tp(CFrame.new(farmPos.X, farmPos.Y + 22, farmPos.Z))
+                    GroupAreaMobs(cluster, farmPos)
+                    if nearestEnemy then
+                        Attack.Kill(nearestEnemy, true)
+                    end
+                    SmartEquipWeapon()
+                    FastAttack.Attack()
                 else
-                    _tp(CFrame.new(-9495.6806640625, 453.58624267578125, 5977.3486328125))
+                    local waitPoints = {
+                        Vector3.new(-9515, 142, 5536),
+                        Vector3.new(-8761, 142, 6050),
+                        Vector3.new(-9516, 172, 6078)
+                    }
+                    local wp = waitPoints[math.random(1, #waitPoints)]
+                    _tp(CFrame.new(wp.X, wp.Y + 20, wp.Z))
+                    pcall(function()
+                        game:GetService("Workspace"):RequestStreamAroundAsync(wp)
+                    end)
                 end
             end)
         end
@@ -5207,97 +5397,164 @@ spawn(function()
 end)
 
 BoneQ = Tabs.Main:AddToggle({
-Name = "Accept Quests", 
-Description = "", 
-Default = false,
-Callback = function(Value)
-  _G.AcceptQuestB = Value
-end
-})        
-
-
+    Name = "Accept Quests", 
+    Description = "Automatically accepts Haunted Castle quests while farming bones", 
+    Default = false,
+    Callback = function(Value)
+        _G.AcceptQuestB = Value
+    end
+})
 
 Tabs.Main:AddToggle({
-Name = "Auto Soul Reaper", 
-Description = "", 
-Default = false,
-Callback = function(Value)
-  _G.AutoHytHallow = Value
-end})
-spawn(function()
-  while wait(Sec) do
-    if _G.AutoHytHallow then
-      pcall(function()
-        local v = GetConnectionEnemies("Soul Reaper")
-	    if v then
-          repeat task.wait() Attack.Kill(v,_G.AutoHytHallow) until v.Humanoid.Health <= 0 or _G.AutoHytHallow == false
-        else
-          if not GetBP("Hallow Essence") then
-            repeat task.wait(.1)replicated.Remotes.CommF_:InvokeServer("Bones","Buy",1,1)until _G.AutoHytHallow == false or GetBP("Hallow Essence")
-          else
-            repeat wait(.1) _tp(CFrame.new(-8932.322265625, 146.83154296875, 6062.55078125))until _G.AutoHytHallow == false or (plr.Character.HumanoidRootPart.CFrame == CFrame.new(-8932.322265625, 146.83154296875, 6062.55078125))
-		    EquipWeapon("Hallow Essence")
-          end
+    Name = "Auto Soul Reaper", 
+    Description = "Spawns and kills Soul Reaper boss when available", 
+    Default = false,
+    Callback = function(Value)
+        _G.AutoHytHallow = Value
+        if not Value then
+            shouldTween = false
+            if _G.TweenCache then
+                pcall(function() _G.TweenCache:Cancel() end)
+            end
         end
-      end)
     end
-  end
-end)
-RanBone = Tabs.Main:AddToggle({
-Name = "Auto Random Bones", 
-Description = "", 
-Default = false,
-Callback = function(Value)
-  _G.Auto_Random_Bone = Value
-end})
-spawn(function()
-  while wait(Sec) do
-    pcall(function()
-      if _G.Auto_Random_Bone then    
-  	    repeat task.wait() replicated.Remotes.CommF_:InvokeServer("Bones","Buy",1,1) until not _G.Auto_Random_Bone
-      end
-    end)
-  end
-end)
-Lucky = Tabs.Main:AddToggle({
-Name = "Auto Try Luck Gravestone", 
-Description = "", 
-Default = false,
-Callback = function(Value)
-  _G.TryLucky = Value
-end})
-spawn(function()
-  while wait(Sec) do
-    if _G.TryLucky then
-    local try_bones_luck = CFrame.new(-8761.3154296875, 164.85829162598, 6161.1567382813)
-      if (plr.Character.HumanoidRootPart.CFrame ~= try_bones_luck) then
-        _tp(CFrame.new(-8761.3154296875, 164.85829162598, 6161.1567382813))
-	 elseif (plr.Character.HumanoidRootPart.CFrame == try_bones_luck) then
-	   replicated.Remotes.CommF_:InvokeServer("gravestoneEvent",1)
-      end
+})
+
+task.spawn(function()
+    while task.wait(0.2) do
+        if _G.AutoHytHallow then
+            pcall(function()
+                local char = plr.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if not root then return end
+
+                local reaper = nil
+                for _, e in ipairs(workspace.Enemies:GetChildren()) do
+                    if e.Name == "Soul Reaper" and IsValidLivingEnemy(e) then
+                        reaper = e
+                        break
+                    end
+                end
+                if not reaper and workspace:FindFirstChild("Characters") then
+                    for _, e in ipairs(workspace.Characters:GetChildren()) do
+                        if e.Name == "Soul Reaper" and IsValidLivingEnemy(e) then
+                            reaper = e
+                            break
+                        end
+                    end
+                end
+
+                if reaper then
+                    Attack.Kill(reaper, true)
+                    SmartEquipWeapon()
+                    FastAttack.Attack()
+                else
+                    local hasEssence = (plr.Backpack and plr.Backpack:FindFirstChild("Hallow Essence")) or (char and char:FindFirstChild("Hallow Essence"))
+                    if hasEssence then
+                        local altarPos = Vector3.new(-8932.32, 146.83, 6062.55)
+                        local dist = (root.Position - altarPos).Magnitude
+                        if dist > 15 then
+                            _tp(CFrame.new(altarPos))
+                        else
+                            EquipWeapon("Hallow Essence")
+                        end
+                    else
+                        local bCount = replicated.Remotes.CommF_:InvokeServer("Bones", "Check")
+                        if bCount and bCount >= 50 then
+                            replicated.Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
+                            task.wait(1)
+                        else
+                            task.wait(1.5)
+                        end
+                    end
+                end
+            end)
+        end
     end
-  end
-end)
-Pray = Tabs.Main:AddToggle({
-Name = "Auto Pray Gravestone", 
-Description = "", 
-Default = false,
-Callback = function(Value)
-  _G.Praying = Value
-end})
-spawn(function()
-  while wait(Sec) do
-    if _G.Praying then
-    local try_bones_luck = CFrame.new(-8761.3154296875, 164.85829162598, 6161.1567382813)
-      if (plr.Character.HumanoidRootPart.CFrame ~= try_bones_luck) then
-	   _tp(CFrame.new(-8761.3154296875, 164.85829162598, 6161.1567382813))
-      elseif (plr.Character.HumanoidRootPart.CFrame == try_bones_luck) then
-	   replicated.Remotes.CommF_:InvokeServer("gravestoneEvent",2)
-      end
-    end
-  end
 end)
 
+RanBone = Tabs.Main:AddToggle({
+    Name = "Auto Random Bones", 
+    Description = "Random surprise roll at Haunted Castle when you have 50+ bones", 
+    Default = false,
+    Callback = function(Value)
+        _G.Auto_Random_Bone = Value
+    end
+})
+
+task.spawn(function()
+    while task.wait(0.5) do
+        if _G.Auto_Random_Bone then
+            pcall(function()
+                local bCount = replicated.Remotes.CommF_:InvokeServer("Bones", "Check")
+                if bCount and bCount >= 50 then
+                    replicated.Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
+                    task.wait(0.8)
+                else
+                    task.wait(2)
+                end
+            end)
+        end
+    end
+end)
+
+Lucky = Tabs.Main:AddToggle({
+    Name = "Auto Try Luck Gravestone", 
+    Description = "Try your luck at the Haunted Castle Gravestone", 
+    Default = false,
+    Callback = function(Value)
+        _G.TryLucky = Value
+    end
+})
+
+task.spawn(function()
+    while task.wait(0.3) do
+        if _G.TryLucky then
+            pcall(function()
+                local char = plr.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if not root then return end
+                local gravePos = Vector3.new(-8761.32, 164.86, 6161.16)
+                local dist = (root.Position - gravePos).Magnitude
+                if dist > 15 then
+                    _tp(CFrame.new(gravePos))
+                else
+                    replicated.Remotes.CommF_:InvokeServer("gravestoneEvent", 1)
+                    task.wait(1.5)
+                end
+            end)
+        end
+    end
+end)
+
+Pray = Tabs.Main:AddToggle({
+    Name = "Auto Pray Gravestone", 
+    Description = "Pray at the Haunted Castle Gravestone", 
+    Default = false,
+    Callback = function(Value)
+        _G.Praying = Value
+    end
+})
+
+task.spawn(function()
+    while task.wait(0.3) do
+        if _G.Praying then
+            pcall(function()
+                local char = plr.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if not root then return end
+                local gravePos = Vector3.new(-8761.32, 164.86, 6161.16)
+                local dist = (root.Position - gravePos).Magnitude
+                if dist > 15 then
+                    _tp(CFrame.new(gravePos))
+                else
+                    replicated.Remotes.CommF_:InvokeServer("gravestoneEvent", 2)
+                    task.wait(1.5)
+                end
+            end)
+        end
+    end
+end)
 
 Tabs.Main:AddSection("Tyrant of the Skies")
 
