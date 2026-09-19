@@ -613,13 +613,8 @@ collectFruits = function(Succes)
   end
 end
 Getmoon = function()
-  if World1 then
-    return Lighting.FantasySky.MoonTextureId
-  elseif World2 then
-    return Lighting.FantasySky.MoonTextureId
-  elseif World3 then
-    return Lighting.Sky.MoonTextureId
-  end
+  local sky = Lighting:FindFirstChildOfClass("Sky") or Lighting:FindFirstChild("FantasySky") or Lighting:FindFirstChild("Sky")
+  return sky and sky.MoonTextureId or ""
 end
 DropFruits = function()
   for _,v3 in next, plr.Backpack:GetChildren() do
@@ -2002,8 +1997,9 @@ spawn(function()
     while wait(1) do
         local cakePrince = game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("CakePrinceSpawner")
         local killStatus = "Cake Prince: ✅"
-        if string.len(cakePrince) >= 86 then
-            local killCount = string.sub(cakePrince, 39, 41)
+        local cpStr = tostring(cakePrince or "")
+        if string.len(cpStr) >= 86 then
+            local killCount = string.sub(cpStr, 39, 41)
             killStatus = "Killed: " .. killCount
         end
         CakePrinceStatus:SetDesc(killStatus)
@@ -2042,7 +2038,8 @@ local FullMoonCheck = Tabs.Info:AddParagraph("Full Moon", "")
 
 task.spawn(function()
     while task.wait(1) do
-        local moonTextureId = game:GetService("Lighting").Sky.MoonTextureId
+        local sky = game:GetService("Lighting"):FindFirstChildOfClass("Sky") or game:GetService("Lighting"):FindFirstChild("Sky")
+        local moonTextureId = sky and sky.MoonTextureId or ""
         local moonStatus = "Moon: 0/5"
         
         if moonTextureId == "http://www.roblox.com/asset/?id=9709149431" then
