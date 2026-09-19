@@ -677,7 +677,7 @@ getInfinity_Ability = function(Method, Var)
     for _,gc in next, (getgc and getgc() or {}) do
       if plr.Character.Soru then
         if ((typeof(gc) == "function") and (getfenv(gc).script == plr.Character.Soru)) then
-          for _, v in next, getupvalues(gc) do
+          for _, v in next, (getupvalues and getupvalues(gc) or {}) do
             if (typeof(v) == "table") then
               repeat wait(Sec) v.LastUse = 0 until not Var or (plr.Character.Humanoid.Health <= 0)
             end
@@ -8638,6 +8638,36 @@ spawn(function()
     end
   end
 end)
+local function UpdateIslandMirageESP()
+    pcall(function()
+        local locations = workspace:FindFirstChild("_WorldOrigin") and workspace._WorldOrigin:FindFirstChild("Locations")
+        if not locations then return end
+        for _, loc in ipairs(locations:GetChildren()) do
+            if loc.Name == "Mirage Island" then
+                if MirageIslandESP then
+                    if not loc:FindFirstChild("NameEsp") then
+                        local bill = Instance.new("BillboardGui")
+                        bill.Name = "NameEsp"
+                        bill.AlwaysOnTop = true
+                        bill.Size = UDim2.new(0, 100, 0, 50)
+                        bill.Adornee = loc
+                        local lbl = Instance.new("TextLabel", bill)
+                        lbl.Size = UDim2.new(1, 0, 1, 0)
+                        lbl.BackgroundTransparency = 1
+                        lbl.TextColor3 = Color3.fromRGB(0, 255, 255)
+                        lbl.Text = "Mirage Island"
+                        bill.Parent = loc
+                    end
+                else
+                    if loc:FindFirstChild("NameEsp") then
+                        loc.NameEsp:Destroy()
+                    end
+                end
+            end
+        end
+    end)
+end
+
 Tabs.Race:AddToggle({
     Name = "Esp Mirage Island",
     Description = "",
