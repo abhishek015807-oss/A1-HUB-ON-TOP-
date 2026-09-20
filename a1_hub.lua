@@ -774,11 +774,11 @@ task.spawn(function()
                     hrp.RotVelocity = Vector3.new(0, 0, 0)
                 end
             elseif block and block.Parent == workspace then
-                if _isFarming then
-                    -- Farming but between tweens: hold hrp at block's last target position
+                -- Only hold character if farming and arrived within 50 studs of destination
+                if _isFarming and _G.CurrentTweenTarget and (_G.CurrentTweenTarget.Position - block.Position).Magnitude < 50 then
                     hrp.CFrame = block.CFrame
                 else
-                    -- Not farming: block tracks character (prevents snap to old block position)
+                    -- Idle or moving: block stays at character to eliminate any snap-back
                     block.CFrame = hrp.CFrame
                 end
             end
@@ -1119,26 +1119,29 @@ _tp = function(target)
             _G.CurrentTween = nil
         end
         _G.CurrentTweenTarget = nil
+        _G.FinalTweenTarget = nil
         return
     end
 
     local distance = (gg.Position - rootPart.Position).Magnitude
+    local horizDist = (Vector2.new(gg.Position.X, gg.Position.Z) - Vector2.new(rootPart.Position.X, rootPart.Position.Z)).Magnitude
 
-    -- Fast arrival: already within 3 studs
-    if distance < 3 then
+    -- Fast arrival: already within 4 studs
+    if distance < 4 then
         if _G.CurrentTween and _G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing then
             pcall(function() _G.CurrentTween:Cancel() end)
             _G.CurrentTween = nil
         end
         _G.CurrentTweenTarget = nil
+        _G.FinalTweenTarget = nil
         block.CFrame = gg
         rootPart.CFrame = gg
         return
     end
 
-    -- Deduplication: if already smoothly tweening to this exact target (within 10 studs), let it play uninterrupted!
-    if _G.CurrentTween and _G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing and _G.CurrentTweenTarget then
-        if (_G.CurrentTweenTarget.Position - gg.Position).Magnitude <= 20 then
+    -- Deduplication: if already smoothly tweening towards this exact final target, let it play uninterrupted!
+    if _G.CurrentTween and _G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing and _G.FinalTweenTarget then
+        if (_G.FinalTweenTarget.Position - gg.Position).Magnitude <= 35 then
             return _G.CurrentTween
         end
     end
@@ -1150,6 +1153,8 @@ _tp = function(target)
         pcall(function() _G.CurrentTween:Cancel() end)
         _G.CurrentTween = nil
     end
+
+    _G.FinalTweenTarget = gg
 
     -- Bypass teleport if enabled
     pcall(function()
@@ -1213,20 +1218,35 @@ _tp = function(target)
     end
 
     -- Recalculate distance and speed
-    distance = (gg.Position - rootPart.Position).Magnitude
-    local speed = _G.TweenSpeed or (Settings and Settings["Tween Speed"]) or 200
-    if speed <= 0 then speed = 200 end
-    
-    -- Only sync block to rootPart when not already tweening (prevents snap-back restart)
-    local _isTweeningNow = (_G.CurrentTween ~= nil) and (_G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing)
-    if not _isTweeningNow then
-        block.CFrame = rootPart.CFrame
+    local speed = _G.TweenSpeed or (Settings and Settings["Tween Speed"]) or 220
+    if speed <= 0 then speed = 220 end
+
+    -- Safe Cruise Trajectory Calculation:
+    -- When traveling across open ocean (>250 studs), fly at safe cruise altitude (>= 220 studs)
+    -- This prevents dipping into water, taking water damage, dying, and respawning at idle position!
+    local isLongDistance = horizDist > 250
+    local cruiseY = math.max(rootPart.Position.Y, gg.Position.Y, 220)
+    local targetCF = gg
+
+    if isLongDistance then
+        if rootPart.Position.Y < 180 then
+            -- Climb first before crossing open ocean
+            targetCF = CFrame.new(rootPart.Position.X, cruiseY, rootPart.Position.Z)
+        else
+            -- Cruise horizontally at safe altitude above ocean waves
+            targetCF = CFrame.new(gg.Position.X, cruiseY, gg.Position.Z)
+        end
     end
     
-    local tweenInfo = TweenInfo.new(distance / speed, Enum.EasingStyle.Linear)
-    local tween = TweenService:Create(block, tweenInfo, {CFrame = gg})
+    -- Always sync block to current rootPart when launching this leg
+    block.CFrame = rootPart.CFrame
+    
+    local legDistance = (targetCF.Position - rootPart.Position).Magnitude
+    if legDistance < 1 then legDistance = 1 end
+    local tweenInfo = TweenInfo.new(legDistance / speed, Enum.EasingStyle.Linear)
+    local tween = TweenService:Create(block, tweenInfo, {CFrame = targetCF})
     _G.CurrentTween = tween
-    _G.CurrentTweenTarget = gg
+    _G.CurrentTweenTarget = targetCF
     _G.TweenCache = tween    
     
     shouldTween = true
@@ -1242,16 +1262,23 @@ _tp = function(target)
             end 
             task.wait(0.05) 
         end 
-        -- Clean up only if this is still the active tween generation
-        if _G.TweenGen == myGen then
-            _G.CurrentTween = nil
-            _G.CurrentTweenTarget = nil
-            block.CFrame = gg
+        -- When this leg completes and generation is still valid:
+        if _G.TweenGen == myGen and shouldTween then
+            block.CFrame = targetCF
             pcall(function()
                 if rootPart and rootPart.Parent then
-                    rootPart.CFrame = gg
+                    rootPart.CFrame = targetCF
                 end
             end)
+            -- If this was a long-distance cruise leg, automatically start next leg to final target
+            if isLongDistance then
+                _tp(gg)
+                return
+            end
+            -- Arrived at final destination:
+            _G.CurrentTween = nil
+            _G.CurrentTweenTarget = nil
+            _G.FinalTweenTarget = nil
             -- Clean up BodyClip only if no ongoing farming feature requires it
             if not (getgenv().OnFarm or _G.FarmEliteHunt or _G.Level or _G.AutoRaidCastle or _G.FarmMagnetToken or _G.AutoFarm_Bone or _G.AutoHytHallow) then
                 shouldTween = false
@@ -1265,7 +1292,8 @@ _tp = function(target)
     
     return tween
 end
-
+_G._tp = _tp
+getgenv()._tp = _tp
 old_tp = function(p) 
     local char = plr.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
