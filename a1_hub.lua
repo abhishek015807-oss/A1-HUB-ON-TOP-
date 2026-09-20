@@ -764,16 +764,23 @@ task.spawn(function()
             if not hrp or not hum or hum.Health <= 0 then return end
 
             local isTweening = (_G.CurrentTween ~= nil) and (_G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing)
+            local _isFarming = _G.Level or _G.FarmEliteHunt or _G.AutoFarm_Bone
+                or _G.FarmMagnetToken or _G.AutoRaidCastle or _G.AutoHytHallow
             if isTweening and block and block.Parent == workspace then
+                -- Active tween: lock hrp to block
                 hrp.CFrame = block.CFrame
                 if hrp.Velocity.Magnitude > 2 then
                     hrp.Velocity = Vector3.new(0, 0, 0)
                     hrp.RotVelocity = Vector3.new(0, 0, 0)
                 end
             elseif block and block.Parent == workspace then
-                -- When NOT actively tweening, block ALWAYS stays at character position!
-                -- This completely eliminates the "snap back to idle position" bug!
-                block.CFrame = hrp.CFrame
+                if _isFarming then
+                    -- Farming but between tweens: hold hrp at block's last target position
+                    hrp.CFrame = block.CFrame
+                else
+                    -- Not farming: block tracks character (prevents snap to old block position)
+                    block.CFrame = hrp.CFrame
+                end
             end
         end)
     end)
@@ -1131,7 +1138,7 @@ _tp = function(target)
 
     -- Deduplication: if already smoothly tweening to this exact target (within 10 studs), let it play uninterrupted!
     if _G.CurrentTween and _G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing and _G.CurrentTweenTarget then
-        if (_G.CurrentTweenTarget.Position - gg.Position).Magnitude <= 10 then
+        if (_G.CurrentTweenTarget.Position - gg.Position).Magnitude <= 20 then
             return _G.CurrentTween
         end
     end
@@ -1210,8 +1217,11 @@ _tp = function(target)
     local speed = _G.TweenSpeed or (Settings and Settings["Tween Speed"]) or 200
     if speed <= 0 then speed = 200 end
     
-    -- Always sync block to current rootPart before starting tween
-    block.CFrame = rootPart.CFrame
+    -- Only sync block to rootPart when not already tweening (prevents snap-back restart)
+    local _isTweeningNow = (_G.CurrentTween ~= nil) and (_G.CurrentTween.PlaybackState == Enum.PlaybackState.Playing)
+    if not _isTweeningNow then
+        block.CFrame = rootPart.CFrame
+    end
     
     local tweenInfo = TweenInfo.new(distance / speed, Enum.EasingStyle.Linear)
     local tween = TweenService:Create(block, tweenInfo, {CFrame = gg})
@@ -3275,8 +3285,14 @@ task.spawn(function()
                         local distToCenter = (root.Position - playerCenterPos.Position).Magnitude
                         if distToCenter > 4 then
                             _tp(playerCenterPos)
-                        else
-                            if block then block.CFrame = playerCenterPos end
+                        end
+                        -- Hold block at mob center so Heartbeat keeps character there
+                        if block then block.CFrame = playerCenterPos end
+                        if distToCenter <= 4 then
+                            pcall(function()
+                                local hrpNow = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+                                if hrpNow then hrpNow.CFrame = playerCenterPos end
+                            end)
                         end
 
                         if #cluster > 1 then
@@ -3316,6 +3332,10 @@ task.spawn(function()
                                 _tp(waitPos)
                             else
                                 if block then block.CFrame = waitPos end
+                                pcall(function()
+                                    local hrpNow = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+                                    if hrpNow then hrpNow.CFrame = waitPos end
+                                end)
                             end
                         end
                     end
@@ -3361,7 +3381,12 @@ task.spawn(function()
                     return
                 end
 
+                -- Lock at NPC position while accepting quest
                 if block then block.CFrame = npcPos end
+                pcall(function()
+                    local hrpNow = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+                    if hrpNow then hrpNow.CFrame = npcPos end
+                end)
 
                 LogFarmStatus("Accepting Quest: " .. qData.Quest .. " (" .. qData.Mon .. ")")
                 pcall(function()
@@ -4787,24 +4812,41 @@ do
                             if not _G.FarmEliteHunt then break end
                             if _FindEliteBoss(currentEliteBoss) then break end
                             _tp(spot * CFrame.new(0, 30, 0))
+                            task.wait(0.5)
                             pcall(function()
-                                if plr.RequestStreamAroundAsync then
-                                    plr:RequestStreamAroundAsync(spot.Position)
-                                end
+                                workspace:RequestStreamAroundAsync(spot.Position)
                             end)
-                            task.wait(1.5)
+                            task.wait(2.0)
+                            if _FindEliteBoss(currentEliteBoss) then break end
                         end
                     else
-                        for _, isl in pairs(_EliteIslands) do
-                            if not _G.FarmEliteHunt then break end
+                        local _orderedIslands = {
+                            _EliteIslands["Floating Turtle"],
+                            _EliteIslands["Hydra Island"],
+                            _EliteIslands["Port Town"],
+                            _EliteIslands["Great Tree"]
+                        }
+                        for _, isl in ipairs(_orderedIslands) do
+                            if not _G.FarmEliteHunt or not isl then break end
                             if _FindEliteBoss(currentEliteBoss) then break end
                             _tp(isl.CFrame * CFrame.new(0, 30, 0))
+                            task.wait(0.5)
                             pcall(function()
-                                if plr.RequestStreamAroundAsync then
-                                    plr:RequestStreamAroundAsync(isl.CFrame.Position)
-                                end
+                                workspace:RequestStreamAroundAsync(isl.CFrame.Position)
                             end)
                             task.wait(2)
+                            if _FindEliteBoss(currentEliteBoss) then break end
+                            for _, spot in ipairs(isl.Spots) do
+                                if not _G.FarmEliteHunt then break end
+                                if _FindEliteBoss(currentEliteBoss) then break end
+                                _tp(spot * CFrame.new(0, 30, 0))
+                                task.wait(0.5)
+                                pcall(function()
+                                    workspace:RequestStreamAroundAsync(spot.Position)
+                                end)
+                                task.wait(1.5)
+                                if _FindEliteBoss(currentEliteBoss) then break end
+                            end
                         end
                     end
                 end)
