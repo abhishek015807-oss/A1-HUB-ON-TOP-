@@ -1703,14 +1703,14 @@ GetStaticQuestData = function()
     -- THIRD WORLD (SEA 3: LEVELS 1500 - 2800+)
     -- ============================================================
     elseif curWorld == 3 then
-        if lvl <= 1524 then return {Quest="PiratePortQuest", QNPC=CFrame.new(-290.07, 42.90, 5581.59), Mon="Pirate Millionaire", MPos=CFrame.new(-246.00, 47.31, 5584.10), Req=1}
-        elseif lvl <= 1574 then return {Quest="PiratePortQuest", QNPC=CFrame.new(-290.07, 42.90, 5581.59), Mon="Pistol Billionaire", MPos=CFrame.new(-187.33, 86.24, 6013.51), Req=2}
-        elseif lvl <= 1599 then return {Quest="DragonCrewQuest", QNPC=CFrame.new(6736.33, 127.45, -712.33), Mon="Dragon Crew Warrior", MPos=CFrame.new(7021.50, 55.76, -730.13), Req=1}
-        elseif lvl <= 1624 then return {Quest="DragonCrewQuest", QNPC=CFrame.new(6736.33, 127.45, -712.33), Mon="Dragon Crew Archer", MPos=CFrame.new(6625.00, 378.00, 244.00), Req=2}
-        elseif lvl <= 1649 then return {Quest="AmazonQuest2", QNPC=CFrame.new(5210.87, 1004.14, 755.84), Mon="Hydra Enforcer", MPos=CFrame.new(4547.11, 1003.10, 334.19), Req=1}
-        elseif lvl <= 1699 then return {Quest="AmazonQuest2", QNPC=CFrame.new(5210.87, 1004.14, 755.84), Mon="Venomous Assailant", MPos=CFrame.new(4674.93, 1134.83, 996.31), Req=2}
-        elseif lvl <= 1724 then return {Quest="MarineTreeIsland", QNPC=CFrame.new(2180.54, 27.82, -6741.55), Mon="Marine Commodore", MPos=CFrame.new(2656.25, 75.61, -7913.84), Req=1}
-        elseif lvl <= 1774 then return {Quest="MarineTreeIsland", QNPC=CFrame.new(2179.99, 28.73, -6740.06), Mon="Marine Rear Admiral", MPos=CFrame.new(3656.77, 160.52, -7001.60), Req=2}
+        if lvl <= 1524 then return {Quest="PiratePortQuest", QNPC=CFrame.new(-450.11, 107.68, 5950.73), Mon="Pirate Millionaire", MPos=CFrame.new(-246.00, 47.31, 5584.10), Req=1}
+        elseif lvl <= 1574 then return {Quest="PiratePortQuest", QNPC=CFrame.new(-450.11, 107.68, 5950.73), Mon="Pistol Billionaire", MPos=CFrame.new(-187.33, 86.24, 6013.51), Req=2}
+        elseif lvl <= 1599 then return {Quest="DragonCrewQuest", QNPC=CFrame.new(6735.11, 126.99, -711.10), Mon="Dragon Crew Warrior", MPos=CFrame.new(7021.50, 55.76, -730.13), Req=1}
+        elseif lvl <= 1624 then return {Quest="DragonCrewQuest", QNPC=CFrame.new(6735.11, 126.99, -711.10), Mon="Dragon Crew Archer", MPos=CFrame.new(6625.00, 378.00, 244.00), Req=2}
+        elseif lvl <= 1649 then return {Quest="AmazonQuest2", QNPC=CFrame.new(5214.34, 1000.47, 759.51), Mon="Hydra Enforcer", MPos=CFrame.new(4547.11, 1003.10, 334.19), Req=1}
+        elseif lvl <= 1699 then return {Quest="AmazonQuest2", QNPC=CFrame.new(5214.34, 1000.47, 759.51), Mon="Venomous Assailant", MPos=CFrame.new(4674.93, 1134.83, 996.31), Req=2}
+        elseif lvl <= 1724 then return {Quest="MarineTreeIsland", QNPC=CFrame.new(2485.73, 73.35, -6788.62), Mon="Marine Commodore", MPos=CFrame.new(2656.25, 75.61, -7913.84), Req=1}
+        elseif lvl <= 1774 then return {Quest="MarineTreeIsland", QNPC=CFrame.new(2485.73, 73.35, -6788.62), Mon="Marine Rear Admiral", MPos=CFrame.new(3656.77, 160.52, -7001.60), Req=2}
         elseif lvl <= 1799 then return {Quest="DeepForestIsland3", QNPC=CFrame.new(-10581.66, 330.87, -8761.19), Mon="Fishman Raider", MPos=CFrame.new(-10407.53, 331.76, -8368.52), Req=1}
         elseif lvl <= 1824 then return {Quest="DeepForestIsland3", QNPC=CFrame.new(-10581.66, 330.87, -8761.19), Mon="Fishman Captain", MPos=CFrame.new(-10994.70, 352.38, -9002.11), Req=2}
         elseif lvl <= 1849 then return {Quest="DeepForestIsland", QNPC=CFrame.new(-13234.04, 331.49, -7625.40), Mon="Forest Pirate", MPos=CFrame.new(-13274.48, 332.38, -7769.58), Req=1}
@@ -2443,6 +2443,35 @@ local function GetNPCModel(npcNamePattern, maxDistFrom)
 end
 
 local function GetNPCCFrame(npcNamePattern, fallbackCFrame)
+    pcall(function()
+        local mgrMod = replicated:FindFirstChild("NPCManager") or (replicated:FindFirstChild("Modules") and replicated.Modules:FindFirstChild("NPCManager"))
+        if mgrMod then
+            local mgr = require(mgrMod)
+            if mgr and mgr.getClosestNPC then
+                local getUp = debug.getupvalues or getupvalues
+                if getUp then
+                    local upvals = getUp(mgr.getClosestNPC)
+                    for _, v in pairs(upvals) do
+                        if type(v) == "table" then
+                            for _, npc in pairs(v) do
+                                if type(npc) == "table" and npc._npcInfo then
+                                    local nName = npc._npcInfo._name or ""
+                                    if nName:lower():find(npcNamePattern:lower(), 1, true)
+                                        or (npcNamePattern:lower():find("marine") and nName:lower():find("marine"))
+                                        or (npcNamePattern:lower():find("tree") and nName:lower():find("tree")) then
+                                        if npc._modelState and npc._modelState._targetLocation then
+                                            fallbackCFrame = npc._modelState._targetLocation
+                                            return
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
     local model = GetNPCModel(npcNamePattern, fallbackCFrame)
     if model then
         local part = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Head") or (model:IsA("Model") and model.PrimaryPart)
@@ -3311,15 +3340,19 @@ task.spawn(function()
                         local playerCenterPos = CFrame.new(centerPos.X, centerPos.Y + farmHeight, centerPos.Z)
 
                         local distToCenter = (root.Position - playerCenterPos.Position).Magnitude
-                        if distToCenter > 4 then
+                        if distToCenter > 6 then
                             _tp(playerCenterPos)
-                        end
-                        -- Hold block at mob center so Heartbeat keeps character there
-                        if block then block.CFrame = playerCenterPos end
-                        if distToCenter <= 4 then
+                        else
+                            -- Close to mob cluster: maintain stable hover above mobs
+                            if block then block.CFrame = playerCenterPos end
                             pcall(function()
                                 local hrpNow = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-                                if hrpNow then hrpNow.CFrame = playerCenterPos end
+                                if hrpNow then
+                                    hrpNow.CFrame = playerCenterPos
+                                    if hrpNow.Velocity.Magnitude > 1 then
+                                        hrpNow.Velocity = Vector3.zero
+                                    end
+                                end
                             end)
                         end
 
